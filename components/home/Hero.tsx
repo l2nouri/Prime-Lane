@@ -14,7 +14,7 @@ export default function Hero() {
         {/* Headline */}
         <h1
           className="font-sans font-medium text-ink mb-5 leading-[1.08]"
-          style={{ fontSize: "clamp(44px, 6vw, 72px)", letterSpacing: "-0.02em" }}
+          style={{ fontSize: "clamp(32px, 4.5vw, 52px)", letterSpacing: "-0.02em" }}
         >
           Your store is leaking revenue. Find out where.
         </h1>
