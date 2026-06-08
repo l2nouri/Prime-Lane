@@ -3,25 +3,42 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-canvas: #ffffff;
+  --color-mist: #f4f4f2;
+  --color-ink: #0a0a0a;
+  --color-graphite: #2a2a2a;
+  --color-stone: #737373;
+  --color-whisper: #d4d4d4;
+  --color-violet: #7c3aed;
+  --color-glow: #f3ebfe;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-canvas);
+  color: var(--color-graphite);
+  opacity: 0;
+  animation: pageLoad 300ms ease forwards;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@keyframes pageLoad {
+  to { opacity: 1; }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
