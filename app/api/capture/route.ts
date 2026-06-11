@@ -1,12 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const body = await req.json();
   const { name, email, revenue, scores, totalScore, timestamp, message, source } = body;
 
   const isAssessment = source !== "contact";
+
+  // Save to Supabase
+  const { error: dbError } = await supabase.from("leads").insert({
+    name,
+    email,
+    revenue,
+    source: isAssessment ? "assessment" : "contact",
+    total_score: isAssessment ? totalScore : null,
+    score_response: isAssessment ? scores?.response : null,
+    score_recovery: isAssessment ? scores?.recovery : null,
+    score_retention: isAssessment ? scores?.retention : null,
+    score_acquisition: isAssessment ? scores?.acquisition : null,
+    message: message ?? null,
+    submitted_at: timestamp ?? new Date().toISOString(),
+  });
+  if (dbError) console.error("[capture] Supabase error:", dbError.message);
 
   try {
     // 1. Notify Leila
