@@ -21,10 +21,8 @@ export async function POST(req: NextRequest) {
     revenue,
     source: isAssessment ? "assessment" : "contact",
     total_score: isAssessment ? totalScore : null,
-    score_response: isAssessment ? scores?.response : null,
-    score_recovery: isAssessment ? scores?.recovery : null,
-    score_retention: isAssessment ? scores?.retention : null,
-    score_acquisition: isAssessment ? scores?.acquisition : null,
+    score_chatbot: isAssessment ? scores?.chatbot : null,
+    score_automation: isAssessment ? scores?.automation : null,
     message: message ?? null,
     submitted_at: timestamp ?? new Date().toISOString(),
   });
@@ -39,7 +37,7 @@ export async function POST(req: NextRequest) {
         ? `New lead: ${name} · Score ${totalScore}/100 · ${revenue}`
         : `New contact: ${name} · ${revenue}`,
       text: isAssessment
-        ? `Name: ${name}\nEmail: ${email}\nRevenue: ${revenue}\nScore: ${totalScore}/100\n\nScores:\nResponse: ${scores?.response}/25\nRecovery: ${scores?.recovery}/25\nRetention: ${scores?.retention}/25\nAcquisition: ${scores?.acquisition}/25\n\nTimestamp: ${timestamp}`
+        ? `Name: ${name}\nEmail: ${email}\nRevenue: ${revenue}\nScore: ${totalScore}/100\n\nScores:\nAI Chatbot: ${scores?.chatbot}/50\nWorkflow Automation: ${scores?.automation}/50\n\nTimestamp: ${timestamp}`
         : `Name: ${name}\nEmail: ${email}\nRevenue: ${revenue}\n\nMessage:\n${message}\n\nTimestamp: ${timestamp}`,
     });
 

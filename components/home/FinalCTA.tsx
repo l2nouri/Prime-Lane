@@ -27,7 +27,7 @@ export default function FinalCTA() {
             href="/assessment"
             className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
           >
-            Find my revenue leaks →
+            Take the free assessment →
           </Link>
           <p className="font-mono text-[11px] text-stone mt-4">
             Free · No credit card · Results in minutes

@@ -37,7 +37,7 @@ export default function Hero() {
             href="/assessment"
             className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
           >
-            Find my revenue leaks →
+            Take the Free Revenue Leak Assessment →
           </Link>
           <button
             onClick={() => {

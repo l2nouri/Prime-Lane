@@ -8,8 +8,8 @@ import {
 } from "@/lib/assessment";
 
 function getRange(score: number): "high" | "medium" | "low" {
-  if (score <= 10) return "high";
-  if (score <= 17) return "medium";
+  if (score <= 20) return "high";
+  if (score <= 34) return "medium";
   return "low";
 }
 

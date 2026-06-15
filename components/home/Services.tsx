@@ -7,73 +7,33 @@ const services = [
     num: "01",
     category: "Support",
     channel: "24/7 Website + WhatsApp",
-    name: "Customer Support Agent",
+    name: "AI Chatbot",
     description:
-      "A human-feeling AI agent that answers customer questions around the clock — product info, sizing, shipping, returns, order status — in your brand's own voice. Handles multiple languages. Escalates to a human only when genuinely needed.",
+      "Customers ask questions at all hours — and without someone there, they buy elsewhere. A human-feeling AI agent handles product questions, sizing, shipping, returns, and order status around the clock in your brand's exact voice. Handles multiple languages and escalates to a human only when genuinely needed.",
     features: [
-      "Website chat widget",
-      "WhatsApp integration",
+      "Faster response times",
+      "Fewer lost sales",
+      "Zero overnight gaps",
       "Brand voice & tone",
       "Multi-language",
-      "FAQ knowledge base",
       "Human escalation",
     ],
-    setup: "€900",
-    monthly: "€450–550",
   },
   {
     num: "02",
-    category: "Convert",
+    category: "Convert + Retain",
     channel: "Email + WhatsApp",
-    name: "Abandoned Cart Recovery",
+    name: "Workflow Automation",
     description:
-      "An AI-powered recovery system that detects abandoned carts and sends personalized follow-up messages — mentioning the specific product, in your tone, at the right moment. Not a generic reminder. A message that feels like it came from you personally.",
+      "Most brands lose revenue twice: in abandoned carts they never recover, and in customers they go silent with after the order. Personalized cart follow-ups mention the specific product, in your tone, at the right moment. Post-purchase sequences handle review requests, upsells, and loyalty follow-ups automatically.",
     features: [
-      "Cart detection",
-      "Personalized email",
-      "WhatsApp follow-up",
-      "Product-specific copy",
-      "Multi-step timing",
+      "Cart recovery",
+      "Post-purchase sequences",
+      "Upsell automation",
+      "Review requests",
+      "Loyalty follow-ups",
       "Revenue tracking",
     ],
-    setup: "€800",
-    monthly: "€380–480",
-  },
-  {
-    num: "03",
-    category: "Retain",
-    channel: "Post-Purchase Loyalty",
-    name: "Post-Purchase Nurture",
-    description:
-      "An automated post-purchase system that builds loyalty and drives repeat sales. Review requests at the perfect moment, complementary product suggestions, return handling, and keep-warm sequences between purchases — all automatic.",
-    features: [
-      "Review automation",
-      "Upsell sequences",
-      "Return handling",
-      "Loyalty follow-ups",
-      "Repeat triggers",
-      "Satisfaction check",
-    ],
-    setup: "€1,000",
-    monthly: "€480–580",
-  },
-  {
-    num: "04",
-    category: "Acquire",
-    channel: "Outreach + Pipeline",
-    name: "Customer Acquisition System",
-    description:
-      "An AI-powered outreach system that identifies potential customers and micro-influencers, personalizes every message, follows up automatically, and manages the entire pipeline from first contact to conversion.",
-    features: [
-      "Prospect identification",
-      "AI personalization",
-      "Influencer outreach",
-      "Follow-up sequences",
-      "Lead qualification",
-      "Pipeline management",
-    ],
-    setup: "€1,400",
-    monthly: "€600–700",
   },
 ];
 
@@ -96,7 +56,7 @@ function ServiceCard({ service, delay }: { service: (typeof services)[0]; delay:
 
       <p className="text-[15px] text-stone leading-relaxed mb-5">{service.description}</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {service.features.map((f) => (
           <span
             key={f}
@@ -105,15 +65,6 @@ function ServiceCard({ service, delay }: { service: (typeof services)[0]; delay:
             {f}
           </span>
         ))}
-      </div>
-
-      <div className="flex gap-3">
-        <span className="font-mono text-[12px] font-medium text-canvas bg-ink px-3 py-1.5 rounded-[4px]">
-          Setup {service.setup}
-        </span>
-        <span className="font-mono text-[12px] font-medium text-canvas bg-violet px-3 py-1.5 rounded-[4px]">
-          Monthly {service.monthly}
-        </span>
       </div>
     </div>
   );
@@ -133,7 +84,7 @@ export default function Services() {
             className="font-sans font-medium text-ink mb-4"
             style={{ fontSize: "clamp(28px, 4vw, 40px)", letterSpacing: "-0.01em", lineHeight: 1.12 }}
           >
-            Four AI systems. One goal: more revenue, less manual work.
+            Two AI systems. One goal: more revenue, less manual work.
           </h2>
           <p className="text-[17px] text-stone" style={{ maxWidth: 560 }}>
             Each system is built specifically for your brand — your voice, your products, your

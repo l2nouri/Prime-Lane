@@ -4,10 +4,8 @@ import Link from "next/link";
 import { useReveal } from "@/lib/useReveal";
 
 const mockModules = [
-  { label: "Customer Response", score: 14, max: 25 },
-  { label: "Cart Recovery", score: 8, max: 25 },
-  { label: "Post-Purchase", score: 12, max: 25 },
-  { label: "Acquisition", score: 7, max: 25 },
+  { label: "AI Chatbot", score: 38, max: 50 },
+  { label: "Workflow Automation", score: 22, max: 50 },
 ];
 
 export default function AssessmentCTA() {
@@ -40,8 +38,7 @@ export default function AssessmentCTA() {
             className="mb-8"
             style={{ fontSize: 16, color: "#737373", lineHeight: 1.7 }}
           >
-            8 minutes. 12 questions. A personalized score across response, recovery, retention, and
-            acquisition.
+            8 minutes. 8 questions. A personalized score across AI Chatbot and Workflow Automation.
             <br />
             Free — and more useful than a 1-hour agency call.
           </p>

@@ -20,10 +20,8 @@ export default function AssessmentPage() {
   const [phase, setPhase] = useState<Phase>("question");
   const [completedModule, setCompletedModule] = useState<{ name: string; score: number; max: number } | null>(null);
   const [moduleScores, setModuleScores] = useState<ModuleScores>({
-    response: 0,
-    recovery: 0,
-    retention: 0,
-    acquisition: 0,
+    chatbot: 0,
+    automation: 0,
   });
   const [totalScore, setTotalScore] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -63,7 +61,7 @@ export default function AssessmentPage() {
       setCompletedModule({
         name: mod.name,
         score: newScores[mod.key],
-        max: 25,
+        max: 50,
       });
       setPhase("module-complete");
       setTimeout(() => {

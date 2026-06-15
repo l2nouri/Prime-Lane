@@ -28,7 +28,7 @@ export default function ModuleBreakdown({ scores }: { scores: ModuleScores }) {
               />
             </div>
             <span className="font-mono text-[12px] text-violet w-10 text-right">
-              {score}/25
+              {score}/{MODULE_MAX}
             </span>
             <span
               className="font-mono text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"

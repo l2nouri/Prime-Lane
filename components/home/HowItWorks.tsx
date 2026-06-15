@@ -5,8 +5,8 @@ import { useReveal } from "@/lib/useReveal";
 const steps = [
   {
     num: "01",
-    title: "Take the assessment",
-    body: "8 minutes. 12 questions about how your store handles customer response, cart recovery, post-purchase, and acquisition.",
+    title: "Take the Revenue Leak Assessment",
+    body: "8 minutes. 8 questions across 2 areas: AI Chatbot readiness and Workflow Automation.",
   },
   {
     num: "02",
