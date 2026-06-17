@@ -9,15 +9,15 @@ export default function QuestionCard({
   onAnswer,
 }: {
   question: Question;
-  onAnswer: (points: number) => void;
+  onAnswer: (points: number, label: string) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
 
-  const handleSelect = (points: number, index: number) => {
+  const handleSelect = (points: number, label: string, index: number) => {
     if (selected !== null) return;
     setSelected(index);
     setTimeout(() => {
-      onAnswer(points);
+      onAnswer(points, label);
       setSelected(null);
     }, 350);
   };
@@ -36,7 +36,7 @@ export default function QuestionCard({
             key={i}
             label={opt.label}
             selected={selected === i}
-            onClick={() => handleSelect(opt.points, i)}
+            onClick={() => handleSelect(opt.points, opt.label, i)}
           />
         ))}
       </div>

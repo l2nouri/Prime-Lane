@@ -75,10 +75,10 @@ export default function ContactPage() {
             </p>
             <div className="mt-8 flex flex-col gap-3">
               <a
-                href="mailto:hello@primelane.com"
+                href="mailto:hello@lenava.io"
                 className="text-[14px] text-violet hover:underline"
               >
-                hello@primelane.com
+                hello@lenava.io
               </a>
               <p className="font-mono text-[11px] text-stone">Milan, Italy</p>
               <p className="font-mono text-[11px] text-stone">EN · IT · ES</p>

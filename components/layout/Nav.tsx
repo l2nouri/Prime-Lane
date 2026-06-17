@@ -46,7 +46,7 @@ export default function Nav() {
           <Link href="/" className="flex items-center gap-3 no-underline">
 <div className="flex flex-col items-start leading-none gap-[8px]">
               <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
-                Prime Lane
+                Lenava
               </span>
               <span className="font-sans text-[9px] text-stone tracking-[0.14em]">
                 Built to be found.
@@ -100,7 +100,7 @@ export default function Nav() {
               </svg>
               <div className="flex flex-col items-start leading-none gap-[8px]">
                 <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
-                  Prime Lane
+                  Lenava
                 </span>
                 <span className="font-sans text-[9px] text-stone tracking-[0.14em] uppercase">
                   Built to be found.

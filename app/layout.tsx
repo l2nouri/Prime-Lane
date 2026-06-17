@@ -5,21 +5,21 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Prime Lane — AI Agents for Ecommerce Brands",
+  title: "Lenava — AI Agents for Ecommerce Brands",
   description:
     "AI agents and automation systems for independent ecommerce brands growing internationally. Built to be found.",
   openGraph: {
-    title: "Prime Lane — AI Agents for Ecommerce Brands",
+    title: "Lenava — AI Agents for Ecommerce Brands",
     description:
-      "Stop losing revenue to unanswered messages, abandoned carts, and weak follow-ups. Prime Lane builds AI systems that run 24/7 in your brand's voice.",
-    url: "https://primelane.com",
-    siteName: "Prime Lane",
+      "Stop losing revenue to unanswered messages, abandoned carts, and weak follow-ups. Lenava builds AI systems that run 24/7 in your brand's voice.",
+    url: "https://lenava.io",
+    siteName: "Lenava",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Prime Lane — AI Agents for Ecommerce Brands",
+    title: "Lenava — AI Agents for Ecommerce Brands",
     description:
       "AI agents and automation systems for independent ecommerce brands. Built to be found.",
   },
@@ -37,7 +37,7 @@ export default function RootLayout({
         {/* Plausible analytics — fires custom events via usePlausible() hook */}
         <Script
           defer
-          data-domain="primelane.com"
+          data-domain="lenava.io"
           src="https://plausible.io/js/script.js"
         />
       </body>

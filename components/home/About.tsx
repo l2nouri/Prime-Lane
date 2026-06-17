@@ -18,7 +18,7 @@ export default function About() {
             >
               <Image
                 src="/leila.jpg"
-                alt="Leila Noori, Founder of Prime Lane"
+                alt="Leila Noori, Founder of Lenava"
                 fill
                 className="object-cover"
               />
@@ -34,7 +34,7 @@ export default function About() {
               className="font-sans font-medium text-ink mb-6"
               style={{ fontSize: "clamp(22px, 3vw, 32px)", letterSpacing: "-0.01em", lineHeight: 1.2 }}
             >
-              I&apos;m Leila Noori, founder of Prime Lane.
+              I&apos;m Leila Noori, founder of Lenava.
             </p>
             <p className="text-[17px] text-graphite mb-8" style={{ lineHeight: 1.7 }}>
               I come from a background in business and operations, which means I don&apos;t just build
@@ -44,13 +44,13 @@ export default function About() {
             <div className="flex flex-col gap-1">
               <p className="text-[15px] font-medium text-ink">Leila Noori</p>
               <p className="font-mono text-[11px] text-stone uppercase tracking-wider">
-                Founder, Prime Lane
+                Founder, Lenava
               </p>
               <a
-                href="mailto:leila@primelane.com"
+                href="mailto:leila@lenava.io"
                 className="font-mono text-[12px] text-violet hover:opacity-75 transition-opacity duration-150 mt-2"
               >
-                leila@primelane.com
+                leila@lenava.io
               </a>
             </div>
           </div>

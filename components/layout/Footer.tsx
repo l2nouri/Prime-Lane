@@ -6,9 +6,9 @@ export default function Footer() {
           Built to be found.
         </span>
         <span className="font-mono text-[11px] text-stone">
-          © {new Date().getFullYear()} Prime Lane ·{" "}
-          <a href="mailto:hello@primelane.com" className="hover:text-ink transition-colors duration-150">
-            hello@primelane.com
+          © {new Date().getFullYear()} Lenava ·{" "}
+          <a href="mailto:hello@lenava.io" className="hover:text-ink transition-colors duration-150">
+            hello@lenava.io
           </a>
         </span>
       </div>

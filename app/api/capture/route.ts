@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Notify Leila
     await resend.emails.send({
-      from: "Prime Lane <noreply@primelane.com>",
-      to: "hello@primelane.com",
+      from: "Lenava <noreply@lenava.io>",
+      to: "hello@lenava.io",
       subject: isAssessment
         ? `New lead: ${name} · Score ${totalScore}/100 · ${revenue}`
         : `New contact: ${name} · ${revenue}`,
@@ -43,14 +43,14 @@ export async function POST(req: NextRequest) {
 
     // 2. Confirmation to lead
     await resend.emails.send({
-      from: "Prime Lane <noreply@primelane.com>",
+      from: "Lenava <noreply@lenava.io>",
       to: email,
       subject: isAssessment
-        ? "Your Revenue Leak Report — Prime Lane"
-        : "Thanks for reaching out — Prime Lane",
+        ? "Your Revenue Leak Report — Lenava"
+        : "Thanks for reaching out — Lenava",
       text: isAssessment
-        ? `Hi ${name},\n\nYour Revenue Leak Score: ${totalScore}/100\n\nYour report is ready at: https://primelane.com/report\n\nThe area with the most room to improve is your lowest-scoring module — that's the highest-impact place to start.\n\nI'll follow up shortly to discuss what would make the most sense for your store.\n\n— Leila\nPrime Lane\nhello@primelane.com`
-        : `Hi ${name},\n\nThanks for getting in touch. I'll reply within 24 hours.\n\n— Leila\nPrime Lane\nhello@primelane.com`,
+        ? `Hi ${name},\n\nYour Revenue Leak Score: ${totalScore}/100\n\nYour report is ready at: https://lenava.io/report\n\nThe area with the most room to improve is your lowest-scoring module — that's the highest-impact place to start.\n\nI'll follow up shortly to discuss what would make the most sense for your store.\n\n— Leila\nLenava\nhello@lenava.io`
+        : `Hi ${name},\n\nThanks for getting in touch. I'll reply within 24 hours.\n\n— Leila\nLenava\nhello@lenava.io`,
     });
   } catch (err) {
     // Log error but don't fail the request — user experience takes priority

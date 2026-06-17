@@ -1,99 +1,215 @@
 "use client";
 
 import { useState } from "react";
+import type { ModuleScores } from "@/lib/assessment";
+import { getTopInsights, type AnswerRecord } from "@/lib/insights";
+
+const INDUSTRIES = [
+  "E-commerce",
+  "SaaS",
+  "Professional Services",
+  "Healthcare",
+  "Real Estate",
+  "Hospitality",
+  "Other",
+];
 
 export default function ScoreGate({
   totalScore,
-  onUnlock,
+  moduleScores,
+  answers,
+  onCompleted,
 }: {
   totalScore: number;
-  onUnlock: (name: string, email: string, revenue: string) => Promise<void>;
+  moduleScores: ModuleScores;
+  answers: AnswerRecord[];
+  onCompleted: () => void;
 }) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [revenue, setRevenue] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [industry, setIndustry] = useState("");
   const [loading, setLoading] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const insights = getTopInsights(answers);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !revenue) return;
+    if (!firstName || !email || !companyName || !websiteUrl || !industry) return;
     setLoading(true);
-    await onUnlock(name, email, revenue);
-    setRevealed(true);
-    setLoading(false);
+    setError("");
+
+    try {
+      const res = await fetch("/api/generate-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          email,
+          companyName,
+          websiteUrl,
+          industry,
+          answers,
+          scores: moduleScores,
+          totalScore,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!res.ok) throw new Error("Request failed");
+
+      onCompleted();
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="w-full text-center">
-      <p className="font-mono text-[11px] text-stone uppercase tracking-wider mb-4">
-        Your Revenue Leak Score
-      </p>
-
-      {/* Blurred score */}
-      <div className="relative inline-block mb-2">
-        <span
-          className="font-sans font-medium text-ink block transition-all duration-500"
-          style={{
-            fontSize: 80,
-            letterSpacing: "-0.02em",
-            filter: revealed ? "none" : "blur(10px)",
-            userSelect: "none",
-          }}
+  if (submitted) {
+    return (
+      <div className="w-full text-center">
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-6"
+          style={{ backgroundColor: "var(--color-glow)" }}
         >
-          {totalScore}
-        </span>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M4.5 11.5L8.5 15.5L17.5 6.5" stroke="var(--color-violet)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h2 className="font-sans font-medium text-ink mb-3" style={{ fontSize: 24 }}>
+          Your report is on its way
+        </h2>
+        <p className="text-[15px] text-stone">
+          Check your inbox at <span className="text-ink font-medium">{email}</span> in the next few minutes.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      {/* Score — shown openly */}
+      <div className="text-center mb-8">
+        <p className="font-mono text-[11px] text-stone uppercase tracking-wider mb-4">
+          Your Revenue Leak Score
+        </p>
+        <div className="inline-block mb-1">
+          <span
+            className="font-sans font-medium text-ink block"
+            style={{ fontSize: 80, letterSpacing: "-0.02em", lineHeight: 1 }}
+          >
+            {totalScore}
+          </span>
+        </div>
         <span className="font-mono text-[13px] text-stone">/100</span>
       </div>
 
-      {!revealed && (
-        <div className="mt-6">
-          <p className="text-[16px] text-stone mb-6">
-            Enter your details to unlock your full report.
-          </p>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
-            <input
-              type="text"
-              placeholder="First name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
-            />
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
-            />
-            <select
-              value={revenue}
-              onChange={(e) => setRevenue(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink focus:outline-none focus:border-violet transition-colors duration-150 bg-canvas"
+      {/* 3 insights from their actual answers */}
+      {insights.length > 0 && (
+        <div className="mb-8 flex flex-col gap-3">
+          {insights.map((insight, i) => (
+            <div
+              key={i}
+              className="flex gap-3 items-start px-4 py-3 rounded-[6px]"
+              style={{ backgroundColor: "var(--color-glow)" }}
             >
-              <option value="" disabled>Monthly revenue range</option>
-              <option value="under-10k">Under €10k/month</option>
-              <option value="10k-30k">€10k–30k/month</option>
-              <option value="30k-80k">€30k–80k/month</option>
-              <option value="80k-200k">€80k–200k/month</option>
-              <option value="over-200k">Over €200k/month</option>
-            </select>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150 disabled:opacity-60"
-            >
-              {loading ? "Unlocking..." : "Unlock my report →"}
-            </button>
-          </form>
-          <p className="font-mono text-[11px] text-stone mt-3">
-            No spam. Unsubscribe anytime.
-          </p>
+              <span
+                className="font-mono text-[11px] font-medium mt-0.5 shrink-0"
+                style={{ color: "var(--color-violet)" }}
+              >
+                0{i + 1}
+              </span>
+              <p className="text-[14px] text-ink leading-relaxed">{insight}</p>
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Gate section */}
+      <div
+        className="rounded-[8px] px-6 py-6"
+        style={{ border: "1px solid var(--color-whisper)" }}
+      >
+        <p className="font-mono text-[11px] text-violet uppercase tracking-wider mb-2">
+          Your full report
+        </p>
+        <h3
+          className="font-sans font-medium text-ink mb-1"
+          style={{ fontSize: 18, letterSpacing: "-0.01em" }}
+        >
+          Get your full report, tailored to your business
+        </h3>
+        <p className="text-[14px] text-stone mb-5">
+          Claude will analyse your specific answers and generate a personalised revenue leak report — sent directly to your inbox.
+        </p>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
+          />
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
+          />
+          <input
+            type="text"
+            placeholder="Company name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
+          />
+          <input
+            type="url"
+            placeholder="Website URL"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
+          />
+          <select
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink focus:outline-none focus:border-violet transition-colors duration-150 bg-canvas"
+          >
+            <option value="" disabled>Industry</option>
+            {INDUSTRIES.map((ind) => (
+              <option key={ind} value={ind}>{ind}</option>
+            ))}
+          </select>
+
+          {error && (
+            <p className="text-[13px]" style={{ color: "#c0392b" }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150 disabled:opacity-60"
+          >
+            {loading ? "Generating your report…" : "Get my report →"}
+          </button>
+        </form>
+
+        <p className="font-mono text-[11px] text-stone mt-3 text-center">
+          No spam. Unsubscribe anytime.
+        </p>
+      </div>
     </div>
   );
 }

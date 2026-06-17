@@ -118,8 +118,8 @@ function ReportContent() {
           </Link>
           <p className="mt-3 text-[13px] text-stone">
             Or email{" "}
-            <a href="mailto:hello@primelane.com" className="text-violet hover:underline">
-              hello@primelane.com
+            <a href="mailto:hello@lenava.io" className="text-violet hover:underline">
+              hello@lenava.io
             </a>
           </p>
         </div>
