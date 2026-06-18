@@ -131,7 +131,8 @@ async function* parseSSE(body: ReadableStream<Uint8Array>) {
   }
 }
 
-function getSupabaseClient() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabaseClient(): any {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -398,7 +399,7 @@ async function getEmbedding(text: string): Promise<number[]> {
   return data.data[0]?.embedding ?? [];
 }
 
-async function retrieveRAGContext(message: string, supabase: ReturnType<typeof createClient>): Promise<string> {
+async function retrieveRAGContext(message: string, supabase: ReturnType<typeof getSupabaseClient>): Promise<string> {
   try {
     const embedding = await getEmbedding(message);
     if (embedding.length === 0) return '';
@@ -422,7 +423,7 @@ async function retrieveRAGContext(message: string, supabase: ReturnType<typeof c
 
 async function getConversationHistory(
   sessionId: string,
-  supabase: ReturnType<typeof createClient>
+  supabase: ReturnType<typeof getSupabaseClient>
 ): Promise<ChatMessage[]> {
   try {
     const { data, error } = await supabase
@@ -448,7 +449,7 @@ async function saveMessage(
   role: string,
   content: string,
   source: string,
-  supabase: ReturnType<typeof createClient>
+  supabase: ReturnType<typeof getSupabaseClient>
 ): Promise<void> {
   try {
     await supabase.from('messages').insert({
@@ -466,7 +467,7 @@ async function saveLead(
   input: Record<string, unknown>,
   sessionId: string,
   source: string,
-  supabase: ReturnType<typeof createClient>
+  supabase: ReturnType<typeof getSupabaseClient>
 ): Promise<void> {
   try {
     await supabase.from('chat_leads').insert({
@@ -507,7 +508,7 @@ export async function POST(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
   }
 
-  const { message, sessionId, source, language } = body;
+  const { message, sessionId, source } = body;
 
   if (!message || !sessionId) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
@@ -613,7 +614,7 @@ export async function POST(req: Request): Promise<Response> {
 
         // Save full assistant response in background
         saveMessage(sessionId, 'assistant', fullAssistantText, source, supabase);
-      } catch (err) {
+      } catch {
         controller.enqueue(
           encodeSSE({ type: 'error', message: 'Something went wrong. Please try again.' })
         );
