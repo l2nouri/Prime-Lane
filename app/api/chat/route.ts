@@ -65,12 +65,71 @@ $$;
 
 export const runtime = 'edge';
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+type ChatMessage = { role: 'user' | 'assistant'; content: string };
+type AnthropicTool = { name: string; description: string; input_schema: object };
+
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
+
+async function callAnthropic(
+  system: string,
+  messages: ChatMessage[],
+  tools: AnthropicTool[],
+  stream: false
+): Promise<{ content: Array<{ type: string; text?: string; name?: string; input?: unknown }> }>;
+async function callAnthropic(
+  system: string,
+  messages: ChatMessage[],
+  tools: AnthropicTool[],
+  stream: true
+): Promise<Response>;
+async function callAnthropic(
+  system: string,
+  messages: ChatMessage[],
+  tools: AnthropicTool[],
+  stream: boolean
+): Promise<unknown> {
+  return fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.ANTHROPIC_API_KEY!,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 1024,
+      stream,
+      system,
+      messages,
+      tools,
+      tool_choice: { type: 'auto' },
+    }),
+  });
+}
+
+async function* parseSSE(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') return;
+        try { yield JSON.parse(raw); } catch { /* skip */ }
+      }
+    }
+  }
+}
 
 function getSupabaseClient() {
   return createClient(
@@ -262,7 +321,7 @@ WHAT YOU KNOW ABOUT LENAVA:
 
 Remember: every unanswered customer message is revenue walking out the door. Every abandoned cart without a follow-up is money left on the table. That is the problem Lenava solves. Make it real and specific for each visitor based on exactly what they have told you.`;
 
-const CAPTURE_LEAD_TOOL: Anthropic.Tool = {
+const CAPTURE_LEAD_TOOL: AnthropicTool = {
   name: 'capture_lead',
   description:
     "Save a qualified lead who has shown genuine interest in Lenava's services. Only trigger when the visitor has described their situation AND provided at least one contact method. Never trigger just because someone asked a question.",
@@ -364,7 +423,7 @@ async function retrieveRAGContext(message: string, supabase: ReturnType<typeof c
 async function getConversationHistory(
   sessionId: string,
   supabase: ReturnType<typeof createClient>
-): Promise<Anthropic.MessageParam[]> {
+): Promise<ChatMessage[]> {
   try {
     const { data, error } = await supabase
       .from('messages')
@@ -466,7 +525,7 @@ export async function POST(req: Request): Promise<Response> {
     ragContext || 'No additional context available — rely on the information in this prompt.'
   );
 
-  const messages: Anthropic.MessageParam[] = [
+  const messages: ChatMessage[] = [
     ...history,
     { role: 'user', content: message },
   ];
@@ -477,19 +536,15 @@ export async function POST(req: Request): Promise<Response> {
   // Telegram: collect full response, return JSON
   if (source === 'telegram') {
     try {
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages,
-        tools: [CAPTURE_LEAD_TOOL],
-        tool_choice: { type: 'auto' },
-      });
+      const res = await callAnthropic(systemPrompt, messages, [CAPTURE_LEAD_TOOL], false) as unknown as Response;
+      const response = await res.json() as {
+        content: Array<{ type: string; text?: string; name?: string; input?: unknown }>;
+      };
 
       let reply = '';
       for (const block of response.content) {
         if (block.type === 'text') {
-          reply += block.text;
+          reply += block.text ?? '';
         } else if (block.type === 'tool_use' && block.name === 'capture_lead') {
           await saveLead(block.input as Record<string, unknown>, sessionId, source, supabase);
         }
@@ -499,8 +554,7 @@ export async function POST(req: Request): Promise<Response> {
       return new Response(JSON.stringify({ reply }), {
         headers: { 'Content-Type': 'application/json' },
       });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
+    } catch {
       return new Response(JSON.stringify({ reply: 'Something went wrong. Please try again.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -512,21 +566,15 @@ export async function POST(req: Request): Promise<Response> {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const anthropicStream = await anthropic.messages.stream({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages,
-          tools: [CAPTURE_LEAD_TOOL],
-          tool_choice: { type: 'auto' },
-        });
+        const anthropicRes = await callAnthropic(systemPrompt, messages, [CAPTURE_LEAD_TOOL], true) as Response;
+        if (!anthropicRes.ok || !anthropicRes.body) throw new Error('Anthropic stream failed');
 
         let fullAssistantText = '';
         let currentToolName = '';
         let currentToolInput = '';
         let inToolUse = false;
 
-        for await (const event of anthropicStream) {
+        for await (const event of parseSSE(anthropicRes.body)) {
           if (event.type === 'content_block_start') {
             if (event.content_block.type === 'tool_use') {
               inToolUse = true;
