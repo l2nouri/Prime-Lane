@@ -1,3 +1,4 @@
+import Script from "next/script";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/home/Hero";
@@ -24,6 +25,7 @@ export default function HomePage() {
         <FinalCTA />
       </main>
       <Footer />
+      <Script src="/widget.js" strategy="afterInteractive" />
     </>
   );
 }
