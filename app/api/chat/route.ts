@@ -508,7 +508,7 @@ export async function POST(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
   }
 
-  const { message, sessionId, source } = body;
+  const { message, sessionId, source, language } = body;
 
   if (!message || !sessionId) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
@@ -526,8 +526,17 @@ export async function POST(req: Request): Promise<Response> {
     ragContext || 'No additional context available — rely on the information in this prompt.'
   );
 
+  // If no history, inject the opening greeting so Claude knows it already said it
+  const openingMsg = language === 'it'
+    ? 'Ciao — su cosa stai lavorando?'
+    : 'Hey — what are you working on?';
+
+  const priorMessages: ChatMessage[] = history.length === 0
+    ? [{ role: 'assistant', content: openingMsg }]
+    : history;
+
   const messages: ChatMessage[] = [
-    ...history,
+    ...priorMessages,
     { role: 'user', content: message },
   ];
 
