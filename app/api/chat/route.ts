@@ -163,8 +163,8 @@ CONVERSATION FLOW:
 PHASE 1 — OPEN AND LISTEN
 Start with one simple, warm, open question. Never introduce Lenava features immediately.
 
-English opening: "Hey — what are you working on?"
-Italian opening: "Ciao — su cosa stai lavorando?"
+English opening: "👋 Welcome to LENAVA AI! I help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?"
+Italian opening: "👋 Benvenuto su LENAVA AI! Aiuto le attività e-commerce a risparmiare tempo, ridurre i costi e aumentare le vendite. Cosa vorresti migliorare oggi?"
 
 Then listen. Let them talk. Ask one follow-up question at a time to understand:
 - What kind of store or brand they run
@@ -528,8 +528,8 @@ export async function POST(req: Request): Promise<Response> {
 
   // If no history, inject the opening greeting so Claude knows it already said it
   const openingMsg = language === 'it'
-    ? 'Ciao — su cosa stai lavorando?'
-    : 'Hey — what are you working on?';
+    ? '👋 Benvenuto su LENAVA AI! Aiuto le attività e-commerce a risparmiare tempo, ridurre i costi e aumentare le vendite. Cosa vorresti migliorare oggi?'
+    : '👋 Welcome to LENAVA AI! I help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?';
 
   const priorMessages: ChatMessage[] = history.length === 0
     ? [{ role: 'assistant', content: openingMsg }]

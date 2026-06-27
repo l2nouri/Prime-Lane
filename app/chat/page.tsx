@@ -54,7 +54,9 @@ export default function ChatPage() {
     setIsWidget(params.get('widget') === 'true');
 
     const opening =
-      language === 'it' ? 'Ciao — su cosa stai lavorando?' : 'Hey — what are you working on?';
+      language === 'it'
+        ? '👋 Benvenuto su LENAVA AI! Aiuto le attività e-commerce a risparmiare tempo, ridurre i costi e aumentare le vendite. Cosa vorresti migliorare oggi?'
+        : '👋 Welcome to LENAVA AI! I help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?';
 
     setMessages([
       {

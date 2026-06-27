@@ -177,7 +177,9 @@ export async function POST(req: Request): Promise<Response> {
 
   // Handle /start command
   if (text === '/start') {
-    const greeting = language === 'it' ? 'Ciao — su cosa stai lavorando?' : 'Hey — what are you working on?';
+    const greeting = language === 'it'
+      ? '👋 Benvenuto su LENAVA AI! Aiuto le attività e-commerce a risparmiare tempo, ridurre i costi e aumentare le vendite. Cosa vorresti migliorare oggi?'
+      : '👋 Welcome to LENAVA AI! I help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?';
     await sendTelegramMessage(chatId, greeting);
     return new Response('ok', { status: 200 });
   }
