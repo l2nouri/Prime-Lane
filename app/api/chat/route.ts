@@ -71,7 +71,7 @@ type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type AnthropicTool = { name: string; description: string; input_schema: object };
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
+const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 
 async function callAnthropic(
   system: string,
