@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import ScoreDisplay from "@/components/report/ScoreDisplay";
 import ModuleBreakdown from "@/components/report/ModuleBreakdown";
 import FindingCard from "@/components/report/FindingCard";
+import BookingCTA from "@/components/shared/BookingCTA";
 import { calculateResult, MODULE_NAMES, type ModuleScores } from "@/lib/assessment";
 import { Suspense } from "react";
 
@@ -123,6 +124,8 @@ function ReportContent() {
             </a>
           </p>
         </div>
+
+        <BookingCTA variant="section" />
       </main>
       <Footer />
     </>

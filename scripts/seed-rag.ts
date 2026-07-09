@@ -24,7 +24,7 @@ const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const DOCUMENTS = [
-  'Lenava builds AI agents and automation systems for independent ecommerce brands worldwide with €200k–2M annual revenue, with particular strength working with Italian brands growing internationally. Founded by Leila Nouri, based in Milan, Italy. Website: lenava.io. Contact: hello@lenava.io.',
+  'Lenava builds AI agents and automation systems for independent ecommerce brands worldwide with €200k–2M annual revenue, with particular strength working with Italian brands growing internationally. Founded by Leila Noori, based in Milan, Italy. Website: lenava.io. Contact: hello@lenava.io.',
 
   "Lenava's AI Chatbot service provides 24/7 customer support via website and WhatsApp. Handles product questions, sizing, shipping, returns, and order status in the brand's exact voice. Supports multiple languages. Escalates to a human only when genuinely needed. Key outcomes: faster response times, fewer lost sales, zero overnight gaps, consistent brand voice, human escalation when needed.",
 
@@ -34,7 +34,7 @@ const DOCUMENTS = [
 
   "Lenava is platform-agnostic — since every system is custom-built rather than a pre-made app, Lenava works with any ecommerce platform, including Shopify, WooCommerce, and custom-built stores.",
 
-  'Leila Nouri is the founder of Lenava. She works directly with every client. Contact via WhatsApp or email: hello@lenava.io. Responds within 24 hours.',
+  'Leila Noori is the founder of Lenava. She works directly with every client. Contact via WhatsApp or email: hello@lenava.io. Responds within 24 hours.',
 
   "Lenava's ideal client: independent ecommerce founder, €200k–2M annual revenue, small or solo team, great product but losing revenue to unanswered messages, abandoned carts, and slow follow-ups. No dedicated tech or support team. Based anywhere in the world, with particular strength working with Italian brands selling internationally.",
 

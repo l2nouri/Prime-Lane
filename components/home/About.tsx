@@ -17,7 +17,7 @@ export default function About() {
               style={{ aspectRatio: "4/5", position: "relative" }}
             >
               <Image
-                src="/leila.jpg"
+                src="/LeilaImage.png"
                 alt="Leila Noori, Founder of Lenava"
                 fill
                 className="object-cover"
@@ -47,10 +47,10 @@ export default function About() {
                 Founder, Lenava
               </p>
               <a
-                href="mailto:leila@lenava.io"
+                href="mailto:hello@lenava.io"
                 className="font-mono text-[12px] text-violet hover:opacity-75 transition-opacity duration-150 mt-2"
               >
-                leila@lenava.io
+                hello@lenava.io
               </a>
             </div>
           </div>

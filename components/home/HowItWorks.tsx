@@ -11,7 +11,7 @@ const steps = [
   {
     num: "02",
     title: "Get your personalized report",
-    body: "Instant score across 4 areas. Each module shows what's leaking, what it's costing you, and what to fix first.",
+    body: "Instant score across both areas. Each module shows what's leaking, what it's costing you, and what to fix first.",
   },
   {
     num: "03",

@@ -26,7 +26,7 @@ export default function Hero() {
         >
           Take the 8-minute Revenue Leak Assessment.
           <br />
-          Get a personalized score across 4 critical areas.
+          Get a personalized score across both critical areas.
           <br />
           See exactly where customers are slipping through.
         </p>

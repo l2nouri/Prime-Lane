@@ -21,7 +21,7 @@ export async function GET() {
   const [messagesRes, chatLeadsRes, leadsRes] = await Promise.all([
     supabase.from('messages').select('session_id, role, source, created_at'),
     supabase.from('chat_leads').select('id, session_id, name, email, whatsapp, business_type, problem, preferred_contact, source, language, estimated_hours_saved, estimated_revenue_recovered, created_at').order('created_at', { ascending: false }),
-    supabase.from('leads').select('id, name, email, source, total_score, submitted_at').order('submitted_at', { ascending: false }),
+    supabase.from('leads').select('id, name, email, source, total_score, score_chatbot, score_automation, company_name, website_url, industry, report_content, submitted_at').order('submitted_at', { ascending: false }),
   ]);
 
   const messages = messagesRes.data ?? [];

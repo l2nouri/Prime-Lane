@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePlausible } from "next-plausible";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
+import BookingCTA from "@/components/shared/BookingCTA";
 
 export default function ContactPage() {
   const plausible = usePlausible();
@@ -82,6 +83,10 @@ export default function ContactPage() {
               </a>
               <p className="font-mono text-[11px] text-stone">Milan, Italy</p>
               <p className="font-mono text-[11px] text-stone">EN · IT · ES</p>
+            </div>
+
+            <div className="mt-8">
+              <BookingCTA variant="inline" />
             </div>
           </div>
 

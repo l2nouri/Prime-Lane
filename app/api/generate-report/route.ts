@@ -77,25 +77,6 @@ export async function POST(req: NextRequest) {
     timestamp: string;
   } = body;
 
-  // Save lead to Supabase
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.from("leads").insert({
-      name: firstName,
-      email,
-      source: "assessment",
-      total_score: totalScore,
-      score_chatbot: scores.chatbot,
-      score_automation: scores.automation,
-      submitted_at: timestamp ?? new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("[generate-report] Supabase error:", err);
-  }
-
   // Build answers text for the prompt
   const answersText = answers
     .map((a) => `Q: ${a.questionText}\nA: ${a.answerLabel} (${a.points}/${a.maxPoints} pts)`)
@@ -145,6 +126,29 @@ List exactly 3 actionable steps, ordered by impact. Each step should name the sp
   } catch (err) {
     console.error("[generate-report] Anthropic error:", err);
     reportContent = `## Your Biggest Revenue Gaps\n\nBased on your score of ${totalScore}/100, there are meaningful opportunities in both AI Chatbot (${scores.chatbot}/50) and Workflow Automation (${scores.automation}/50).\n\n## How Automation Can Help ${companyName}\n\nA targeted automation strategy — covering real-time customer response and post-purchase flows — would directly address the gaps identified in your assessment.\n\n## Your 3 Prioritised Next Steps\n\n1. Reply to this email so Leila can review your specific answers and recommend the highest-impact fix.\n2. Book a 20-minute call to walk through what an AI chatbot setup would look like for ${companyName}.\n3. Review your current post-purchase email sequence against the benchmark Leila will share.`;
+  }
+
+  // Save lead + report to Supabase (after generation, so the full report is stored)
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.from("leads").insert({
+      name: firstName,
+      email,
+      source: "assessment",
+      total_score: totalScore,
+      score_chatbot: scores.chatbot,
+      score_automation: scores.automation,
+      company_name: companyName,
+      website_url: websiteUrl,
+      industry,
+      report_content: reportContent,
+      submitted_at: timestamp ?? new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("[generate-report] Supabase error:", err);
   }
 
   const reportHtml = markdownToHtml(reportContent);

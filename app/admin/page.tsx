@@ -6,6 +6,24 @@ import { createClient } from '@/lib/supabase/client';
 
 type ChannelData = { source: string; conversations: number };
 
+type Message = {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  source: string;
+  created_at: string;
+};
+
+type SessionSummary = {
+  sessionId: string;
+  source: string;
+  messageCount: number;
+  preview: string;
+  startedAt: string;
+  lastActivity: string;
+};
+
 type ChatLead = {
   id: string;
   name: string;
@@ -27,6 +45,12 @@ type Lead = {
   email: string;
   source: string;
   total_score: number | null;
+  score_chatbot: number | null;
+  score_automation: number | null;
+  company_name: string | null;
+  website_url: string | null;
+  industry: string | null;
+  report_content: string | null;
   submitted_at: string;
 };
 
@@ -327,6 +351,21 @@ function LeadsTab({ stats }: { stats: Stats }) {
               {'total_score' in selectedLead && (selectedLead as Lead).total_score != null && (
                 <DetailRow label="Assessment Score" value={`${(selectedLead as Lead).total_score}/100`} />
               )}
+              {'score_chatbot' in selectedLead && (selectedLead as Lead).score_chatbot != null && (
+                <DetailRow label="AI Chatbot Score" value={`${(selectedLead as Lead).score_chatbot}/50`} />
+              )}
+              {'score_automation' in selectedLead && (selectedLead as Lead).score_automation != null && (
+                <DetailRow label="Workflow Automation Score" value={`${(selectedLead as Lead).score_automation}/50`} />
+              )}
+              {'company_name' in selectedLead && (selectedLead as Lead).company_name && (
+                <DetailRow label="Company" value={(selectedLead as Lead).company_name!} />
+              )}
+              {'website_url' in selectedLead && (selectedLead as Lead).website_url && (
+                <DetailRow label="Website" value={(selectedLead as Lead).website_url!} />
+              )}
+              {'industry' in selectedLead && (selectedLead as Lead).industry && (
+                <DetailRow label="Industry" value={(selectedLead as Lead).industry!} />
+              )}
               {'source' in selectedLead && (
                 <DetailRow label="Source" value={selectedLead.source} />
               )}
@@ -338,6 +377,16 @@ function LeadsTab({ stats }: { stats: Stats }) {
               )}
               {'submitted_at' in selectedLead && (
                 <DetailRow label="Date" value={formatDate((selectedLead as Lead).submitted_at)} />
+              )}
+              {'report_content' in selectedLead && (selectedLead as Lead).report_content && (
+                <div>
+                  <span className="text-[11px] text-[#A8A098] uppercase tracking-wide">
+                    Generated Report
+                  </span>
+                  <p className="text-[#1A1A1A] mt-1 whitespace-pre-wrap leading-relaxed">
+                    {(selectedLead as Lead).report_content}
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -353,6 +402,212 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span className="text-[11px] text-[#A8A098] uppercase tracking-wide">{label}</span>
       <p className="text-[#1A1A1A] mt-0.5 break-words">{value}</p>
     </div>
+  );
+}
+
+function ConversationsTab() {
+  const [messages, setMessages] = useState<Message[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState('');
+  const [channelFilter, setChannelFilter] = useState<'all' | string>('all');
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/conversations')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed');
+        return res.json();
+      })
+      .then((data) => {
+        setMessages(data.messages ?? []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !messages) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#8A8078]">Failed to load conversations.</p>
+      </div>
+    );
+  }
+
+  // Group messages by session
+  const bySessionMap = new Map<string, Message[]>();
+  for (const m of messages) {
+    if (!bySessionMap.has(m.session_id)) bySessionMap.set(m.session_id, []);
+    bySessionMap.get(m.session_id)!.push(m);
+  }
+
+  const sessions: SessionSummary[] = Array.from(bySessionMap.entries())
+    .map(([sessionId, msgs]) => {
+      const firstUserMsg = msgs.find((m) => m.role === 'user');
+      return {
+        sessionId,
+        source: msgs[0]?.source || 'web',
+        messageCount: msgs.length,
+        preview: firstUserMsg?.content?.slice(0, 80) || msgs[0]?.content?.slice(0, 80) || '—',
+        startedAt: msgs[0]?.created_at,
+        lastActivity: msgs[msgs.length - 1]?.created_at,
+      };
+    })
+    .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+
+  const channels = Array.from(new Set(sessions.map((s) => s.source)));
+
+  const filtered = sessions.filter((s) => {
+    if (channelFilter !== 'all' && s.source !== channelFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return s.preview.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const selectedMessages = selectedSession ? bySessionMap.get(selectedSession) ?? [] : [];
+
+  if (sessions.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
+        <p className="text-[16px] text-[#8A8078]">
+          No conversations yet. Chatbot sessions will appear here once visitors start chatting.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <p className="text-[14px] text-[#8A8078] mb-6">
+        Every chatbot conversation across web, widget, and Telegram.
+      </p>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="Search conversation previews..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 h-10 px-4 rounded-lg border border-[#E8E0D8] text-[14px] text-[#1A1A1A] outline-none focus:border-[#7C3AED] transition-colors bg-white"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setChannelFilter('all')}
+            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-colors ${
+              channelFilter === 'all'
+                ? 'bg-[#7C3AED] text-white'
+                : 'bg-white border border-[#E8E0D8] text-[#8A8078] hover:text-[#5A5550]'
+            }`}
+          >
+            All ({sessions.length})
+          </button>
+          {channels.map((ch) => (
+            <button
+              key={ch}
+              onClick={() => setChannelFilter(ch)}
+              className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-colors ${
+                channelFilter === ch
+                  ? 'bg-[#7C3AED] text-white'
+                  : 'bg-white border border-[#E8E0D8] text-[#8A8078] hover:text-[#5A5550]'
+              }`}
+            >
+              {(CHANNEL_LABELS[ch] || ch)} ({sessions.filter((s) => s.source === ch).length})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-6">
+        <div className={`bg-white rounded-2xl border border-[#E8E0D8] p-6 ${selectedSession ? 'flex-1' : 'w-full'}`}>
+          {filtered.length === 0 ? (
+            <p className="text-[14px] text-[#8A8078] text-center py-8">
+              {search ? 'No conversations match your search.' : 'No conversations yet.'}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-[#E8E0D8] text-[#8A8078]">
+                    <th className="text-left pb-3 font-medium">Preview</th>
+                    <th className="text-left pb-3 font-medium">Channel</th>
+                    <th className="text-left pb-3 font-medium">Messages</th>
+                    <th className="text-left pb-3 font-medium">Last activity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((s) => (
+                    <tr
+                      key={s.sessionId}
+                      onClick={() => setSelectedSession(s.sessionId)}
+                      className={`border-b border-[#F0EBE5] last:border-0 cursor-pointer transition-colors ${
+                        selectedSession === s.sessionId ? 'bg-[#F5F0EB]' : 'hover:bg-[#FAFAF8]'
+                      }`}
+                    >
+                      <td className="py-3 text-[#1A1A1A] font-medium max-w-xs truncate">
+                        {s.preview}
+                      </td>
+                      <td className="py-3">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F0EBE5] text-[#6B6560]">
+                          {CHANNEL_LABELS[s.source] || s.source}
+                        </span>
+                      </td>
+                      <td className="py-3 text-[#6B6560]">{s.messageCount}</td>
+                      <td className="py-3 text-[#A8A098] font-mono text-[12px]">
+                        {formatDate(s.lastActivity)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {selectedSession && (
+          <div className="w-96 shrink-0 bg-white rounded-2xl border border-[#E8E0D8] p-6 sticky top-32 self-start max-h-[70vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-medium text-[#1A1A1A]">Transcript</h3>
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="text-[#A8A098] hover:text-[#6B6560] text-[18px] leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex flex-col gap-3">
+              {selectedMessages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
+                    m.role === 'user'
+                      ? 'bg-[#F5F0EB] text-[#1A1A1A] ml-6'
+                      : 'bg-[#7C3AED]/10 text-[#1A1A1A] mr-6'
+                  }`}
+                >
+                  <span className="block text-[10px] uppercase tracking-wide text-[#A8A098] mb-1">
+                    {m.role === 'user' ? 'Visitor' : 'Lenava'} · {formatDate(m.created_at)}
+                  </span>
+                  {m.content}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -514,8 +769,11 @@ export default function AdminDashboard() {
             {/* Leads Tab */}
             {activeTab === 'Leads' && <LeadsTab stats={stats} />}
 
+            {/* Conversations Tab */}
+            {activeTab === 'Conversations' && <ConversationsTab />}
+
             {/* Coming Soon Tabs */}
-            {!['Dashboard', 'Leads'].includes(activeTab) && (
+            {!['Dashboard', 'Leads', 'Conversations'].includes(activeTab) && (
               <ComingSoonTab name={activeTab} />
             )}
           </>

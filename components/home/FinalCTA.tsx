@@ -20,7 +20,7 @@ export default function FinalCTA() {
             Take the free assessment. Fix your biggest leak first.
           </h2>
           <p className="text-[17px] text-stone mb-10 leading-relaxed">
-            8 minutes. A personalized score across 4 critical areas. A clear recommendation — no
+            8 minutes. A personalized score across both critical areas. A clear recommendation — no
             fluff, no agency pitch. Just a starting point that makes sense for your store.
           </p>
           <Link
