@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ModuleScores } from "@/lib/assessment";
 import { getTopInsights, type AnswerRecord } from "@/lib/insights";
 
@@ -25,13 +26,13 @@ export default function ScoreGate({
   answers: AnswerRecord[];
   onCompleted: () => void;
 }) {
+  const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   const insights = getTopInsights(answers);
@@ -62,34 +63,12 @@ export default function ScoreGate({
       if (!res.ok) throw new Error("Request failed");
 
       onCompleted();
-      setSubmitted(true);
+      router.push(`/report?scores=${encodeURIComponent(JSON.stringify(moduleScores))}`);
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="w-full text-center">
-        <div
-          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-6"
-          style={{ backgroundColor: "var(--color-glow)" }}
-        >
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <path d="M4.5 11.5L8.5 15.5L17.5 6.5" stroke="var(--color-violet)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <h2 className="font-sans font-medium text-ink mb-3" style={{ fontSize: 24 }}>
-          Your report is on its way
-        </h2>
-        <p className="text-[15px] text-stone">
-          Check your inbox at <span className="text-ink font-medium">{email}</span> in the next few minutes.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full">
