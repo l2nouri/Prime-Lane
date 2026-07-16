@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ModuleScores } from "@/lib/assessment";
 import { getTopInsights, type AnswerRecord } from "@/lib/insights";
+import { normalizeUrl } from "@/lib/url";
 
 const INDUSTRIES = [
   "E-commerce",
@@ -43,6 +44,8 @@ export default function ScoreGate({
     setLoading(true);
     setError("");
 
+    const normalizedWebsiteUrl = normalizeUrl(websiteUrl);
+
     try {
       const res = await fetch("/api/generate-report", {
         method: "POST",
@@ -51,7 +54,7 @@ export default function ScoreGate({
           firstName,
           email,
           companyName,
-          websiteUrl,
+          websiteUrl: normalizedWebsiteUrl,
           industry,
           answers,
           scores: moduleScores,
@@ -153,10 +156,12 @@ export default function ScoreGate({
             className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
           />
           <input
-            type="url"
+            type="text"
+            inputMode="url"
             placeholder="Website URL"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
+            onBlur={(e) => setWebsiteUrl(normalizeUrl(e.target.value))}
             required
             className="w-full px-4 py-3 border border-whisper rounded-[4px] text-[15px] text-ink placeholder:text-stone focus:outline-none focus:border-violet transition-colors duration-150"
           />

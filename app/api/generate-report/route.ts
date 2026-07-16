@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
 import type { AnswerRecord } from "@/lib/insights";
+import { normalizeUrl } from "@/lib/url";
 
 function markdownToHtml(text: string): string {
   const lines = text.split("\n");
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     firstName,
     email,
     companyName,
-    websiteUrl,
+    websiteUrl: rawWebsiteUrl,
     industry,
     answers,
     scores,
@@ -76,6 +77,8 @@ export async function POST(req: NextRequest) {
     totalScore: number;
     timestamp: string;
   } = body;
+
+  const websiteUrl = normalizeUrl(rawWebsiteUrl);
 
   // Build answers text for the prompt
   const answersText = answers
