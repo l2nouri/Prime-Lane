@@ -842,6 +842,127 @@ function KnowledgeBaseTab() {
   );
 }
 
+type FeedbackEntry = {
+  id: string;
+  message_id: string;
+  rating: 'up' | 'down';
+  created_at: string;
+  messages: {
+    session_id: string;
+    content: string;
+    source: string;
+    created_at: string;
+  } | null;
+};
+
+function FeedbackTab() {
+  const [entries, setEntries] = useState<FeedbackEntry[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'up' | 'down'>('all');
+
+  useEffect(() => {
+    fetch('/api/admin/feedback')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed');
+        return res.json();
+      })
+      .then((data) => {
+        setEntries(data.feedback ?? []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !entries) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#8A8078]">Failed to load feedback.</p>
+      </div>
+    );
+  }
+
+  const upCount = entries.filter((e) => e.rating === 'up').length;
+  const downCount = entries.filter((e) => e.rating === 'down').length;
+  const filtered = entries.filter((e) => filter === 'all' || e.rating === filter);
+
+  return (
+    <>
+      <p className="text-[14px] text-[#8A8078] mb-6">
+        Visitor thumbs up/down ratings on individual chatbot replies.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard label="Total Ratings" value={entries.length} />
+        <StatCard label="Positive" value={upCount} sub={entries.length ? `${Math.round((upCount / entries.length) * 100)}%` : undefined} />
+        <StatCard label="Negative" value={downCount} sub={entries.length ? `${Math.round((downCount / entries.length) * 100)}%` : undefined} />
+      </div>
+
+      <div className="flex gap-2 mb-6">
+        {(['all', 'up', 'down'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-2 rounded-lg text-[12px] font-medium transition-colors ${
+              filter === f
+                ? 'bg-[#7C3AED] text-white'
+                : 'bg-white border border-[#E8E0D8] text-[#8A8078] hover:text-[#5A5550]'
+            }`}
+          >
+            {f === 'all' ? `All (${entries.length})` : f === 'up' ? `Positive (${upCount})` : `Negative (${downCount})`}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
+          <p className="text-[16px] text-[#8A8078]">
+            {entries.length === 0 ? 'No feedback yet. Ratings will appear here once visitors rate chatbot replies.' : 'No entries match this filter.'}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered.map((entry) => (
+            <div key={entry.id} className="bg-white rounded-2xl border border-[#E8E0D8] p-5">
+              <div className="flex items-center justify-between mb-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                    entry.rating === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {entry.rating === 'up' ? 'Positive' : 'Negative'}
+                </span>
+                <span className="text-[11px] text-[#A8A098] font-mono">
+                  {formatDate(entry.created_at)}
+                </span>
+              </div>
+              <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-wrap">
+                {entry.messages?.content ?? '—'}
+              </p>
+              {entry.messages && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F0EBE5] text-[#6B6560] mt-3">
+                  {CHANNEL_LABELS[entry.messages.source] || entry.messages.source}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function ComingSoonTab({ name }: { name: string }) {
   return (
     <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
@@ -1006,8 +1127,11 @@ export default function AdminDashboard() {
             {/* Knowledge Base Tab */}
             {activeTab === 'Knowledge Base' && <KnowledgeBaseTab />}
 
+            {/* Feedback Tab */}
+            {activeTab === 'Feedback' && <FeedbackTab />}
+
             {/* Coming Soon Tabs */}
-            {!['Dashboard', 'Leads', 'Conversations', 'Knowledge Base'].includes(activeTab) && (
+            {!['Dashboard', 'Leads', 'Conversations', 'Knowledge Base', 'Feedback'].includes(activeTab) && (
               <ComingSoonTab name={activeTab} />
             )}
           </>

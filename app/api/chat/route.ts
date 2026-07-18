@@ -28,6 +28,15 @@ create table documents (
 );
 create index on documents(client_id);
 
+-- Thumbs up/down feedback on individual assistant messages
+create table message_feedback (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid not null references messages(id) on delete cascade,
+  rating text not null check (rating in ('up', 'down')),
+  created_at timestamptz default now()
+);
+create unique index on message_feedback(message_id);
+
 -- Leads captured by the chatbot (separate from assessment leads table)
 create table chat_leads (
   id uuid primary key default gen_random_uuid(),
@@ -492,16 +501,17 @@ async function saveMessage(
   content: string,
   source: string,
   supabase: ReturnType<typeof getSupabaseClient>
-): Promise<void> {
+): Promise<string | null> {
   try {
-    await supabase.from('messages').insert({
-      session_id: sessionId,
-      role,
-      content,
-      source,
-    });
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ session_id: sessionId, role, content, source })
+      .select('id')
+      .single();
+    if (error || !data) return null;
+    return (data as { id: string }).id;
   } catch {
-    // fire and forget
+    return null;
   }
 }
 
@@ -666,10 +676,8 @@ export async function POST(req: Request): Promise<Response> {
           }
         }
 
-        controller.enqueue(encodeSSE({ type: 'done' }));
-
-        // Save full assistant response in background
-        saveMessage(sessionId, 'assistant', fullAssistantText, source, supabase);
+        const messageId = await saveMessage(sessionId, 'assistant', fullAssistantText, source, supabase);
+        controller.enqueue(encodeSSE({ type: 'done', messageId }));
       } catch {
         controller.enqueue(
           encodeSSE({ type: 'error', message: 'Something went wrong. Please try again.' })

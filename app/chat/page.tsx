@@ -8,6 +8,8 @@ type Message = {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  dbId?: string;
+  feedback?: 'up' | 'down';
 };
 
 function getSessionId(): string {
@@ -154,7 +156,9 @@ export default function ChatPage() {
             if (event.type === 'done') {
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === assistantId ? { ...m, isStreaming: false } : m
+                  m.id === assistantId
+                    ? { ...m, isStreaming: false, dbId: event.messageId ?? undefined }
+                    : m
                 )
               );
             }
@@ -199,6 +203,19 @@ export default function ChatPage() {
       setIsStreaming(false);
       inputRef.current?.focus();
     }
+  }
+
+  function sendFeedback(dbId: string, rating: 'up' | 'down') {
+    setMessages((prev) =>
+      prev.map((m) => (m.dbId === dbId ? { ...m, feedback: rating } : m))
+    );
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId: dbId, rating }),
+    }).catch(() => {
+      // best-effort; UI already reflects the click
+    });
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -323,7 +340,43 @@ export default function ChatPage() {
           font-family: var(--font-geist-mono, 'Geist Mono', monospace);
           font-size: 11px;
           color: #737373;
+        }
+
+        .message-footer {
+          display: flex;
+          align-items: center;
+          gap: 10px;
           margin-top: 4px;
+        }
+
+        .feedback-buttons {
+          display: flex;
+          gap: 2px;
+        }
+
+        .feedback-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          padding: 0;
+          background: transparent;
+          border: none;
+          border-radius: 6px;
+          color: #737373;
+          cursor: pointer;
+          transition: background 150ms, color 150ms;
+        }
+
+        .feedback-btn:hover {
+          background: #F4F4F2;
+          color: #2A2A2A;
+        }
+
+        .feedback-btn.active {
+          color: #7C3AED;
+          background: #7C3AED1A;
         }
 
         .typing-dots {
@@ -450,7 +503,43 @@ export default function ChatPage() {
                 <div className={`bubble ${msg.role}`}>
                   {msg.content}
                 </div>
-                <span className="timestamp">{formatTime(msg.timestamp)}</span>
+                <div className="message-footer">
+                  <span className="timestamp">{formatTime(msg.timestamp)}</span>
+                  {msg.role === 'assistant' && msg.dbId && !msg.isStreaming && (
+                    <div className="feedback-buttons">
+                      <button
+                        type="button"
+                        aria-label="Good response"
+                        className={`feedback-btn${msg.feedback === 'up' ? ' active' : ''}`}
+                        onClick={() => sendFeedback(msg.dbId!, 'up')}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M7 22H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3M7 22l3.5-1.5h6a2 2 0 0 0 2-1.7l1-6a2 2 0 0 0-2-2.3h-4l.7-4.2a1.5 1.5 0 0 0-2.6-1.2L7 11v11Z"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Bad response"
+                        className={`feedback-btn${msg.feedback === 'down' ? ' active' : ''}`}
+                        onClick={() => sendFeedback(msg.dbId!, 'down')}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M17 2h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3M17 2l-3.5 1.5h-6a2 2 0 0 0-2 1.7l-1 6a2 2 0 0 0 2 2.3h4l-.7 4.2a1.5 1.5 0 0 0 2.6 1.2L17 13V2Z"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
 
