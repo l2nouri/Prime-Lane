@@ -611,6 +611,237 @@ function ConversationsTab() {
   );
 }
 
+type KnowledgeDocument = {
+  id: string;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+function KnowledgeBaseTab() {
+  const [documents, setDocuments] = useState<KnowledgeDocument[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  function load() {
+    setLoading(true);
+    fetch('/api/admin/knowledge')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed');
+        return res.json();
+      })
+      .then((data) => {
+        setDocuments(data.documents ?? []);
+        setLoading(false);
+        setError(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleAdd() {
+    const content = newContent.trim();
+    if (!content) return;
+    setAdding(true);
+    setFormError(null);
+    try {
+      const res = await fetch('/api/admin/knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) throw new Error('Failed to add entry');
+      setNewContent('');
+      load();
+    } catch {
+      setFormError('Failed to add entry. Please try again.');
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  function startEdit(doc: KnowledgeDocument) {
+    setEditingId(doc.id);
+    setEditContent(doc.content);
+    setFormError(null);
+  }
+
+  async function handleSaveEdit(id: string) {
+    const content = editContent.trim();
+    if (!content) return;
+    setSavingId(id);
+    setFormError(null);
+    try {
+      const res = await fetch('/api/admin/knowledge', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, content }),
+      });
+      if (!res.ok) throw new Error('Failed to save entry');
+      setEditingId(null);
+      load();
+    } catch {
+      setFormError('Failed to save entry. Please try again.');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+    setFormError(null);
+    try {
+      const res = await fetch(`/api/admin/knowledge?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete entry');
+      load();
+    } catch {
+      setFormError('Failed to delete entry. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !documents) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#8A8078]">Failed to load knowledge base.</p>
+      </div>
+    );
+  }
+
+  const filtered = search
+    ? documents.filter((d) => d.content.toLowerCase().includes(search.toLowerCase()))
+    : documents;
+
+  return (
+    <>
+      <p className="text-[14px] text-[#8A8078] mb-6">
+        Content the chatbot retrieves to answer questions. Each entry is embedded and searched by relevance.
+      </p>
+
+      {/* Add new entry */}
+      <div className="bg-white rounded-2xl border border-[#E8E0D8] p-6 mb-6">
+        <h3 className="text-[15px] font-medium text-[#1A1A1A] mb-3">Add Entry</h3>
+        <textarea
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          placeholder="Write a fact or piece of context for the chatbot to know..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-lg border border-[#E8E0D8] text-[14px] text-[#1A1A1A] outline-none focus:border-[#7C3AED] transition-colors bg-white resize-y"
+        />
+        <div className="flex items-center justify-between mt-3">
+          {formError && <span className="text-[12px] text-red-600">{formError}</span>}
+          <button
+            onClick={handleAdd}
+            disabled={adding || !newContent.trim()}
+            className="ml-auto px-4 py-2 rounded-lg text-[13px] font-medium bg-[#7C3AED] text-white hover:bg-[#6D2FD1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {adding ? 'Adding…' : 'Add Entry'}
+          </button>
+        </div>
+      </div>
+
+      <input
+        type="text"
+        placeholder="Search knowledge base..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full h-10 px-4 rounded-lg border border-[#E8E0D8] text-[14px] text-[#1A1A1A] outline-none focus:border-[#7C3AED] transition-colors bg-white mb-6"
+      />
+
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
+          <p className="text-[16px] text-[#8A8078]">
+            {search ? 'No entries match your search.' : 'No knowledge base entries yet.'}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered.map((doc) => (
+            <div key={doc.id} className="bg-white rounded-2xl border border-[#E8E0D8] p-5">
+              {editingId === doc.id ? (
+                <>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-lg border border-[#E8E0D8] text-[14px] text-[#1A1A1A] outline-none focus:border-[#7C3AED] transition-colors bg-white resize-y"
+                  />
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => handleSaveEdit(doc.id)}
+                      disabled={savingId === doc.id || !editContent.trim()}
+                      className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#7C3AED] text-white hover:bg-[#6D2FD1] transition-colors disabled:opacity-50"
+                    >
+                      {savingId === doc.id ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white border border-[#E8E0D8] text-[#8A8078] hover:text-[#5A5550] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-wrap">
+                    {doc.content}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[11px] text-[#A8A098] font-mono">
+                      {formatDate(doc.created_at)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => startEdit(doc)}
+                        className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white border border-[#E8E0D8] text-[#8A8078] hover:text-[#5A5550] transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        disabled={deletingId === doc.id}
+                        className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white border border-[#E8E0D8] text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === doc.id ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function ComingSoonTab({ name }: { name: string }) {
   return (
     <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
@@ -772,8 +1003,11 @@ export default function AdminDashboard() {
             {/* Conversations Tab */}
             {activeTab === 'Conversations' && <ConversationsTab />}
 
+            {/* Knowledge Base Tab */}
+            {activeTab === 'Knowledge Base' && <KnowledgeBaseTab />}
+
             {/* Coming Soon Tabs */}
-            {!['Dashboard', 'Leads', 'Conversations'].includes(activeTab) && (
+            {!['Dashboard', 'Leads', 'Conversations', 'Knowledge Base'].includes(activeTab) && (
               <ComingSoonTab name={activeTab} />
             )}
           </>
