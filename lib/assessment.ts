@@ -71,3 +71,15 @@ export const SERVICE_FOR_MODULE: Record<keyof ModuleScores, { name: string; path
   chatbot: { name: "AI Chatbot", path: "/#services" },
   automation: { name: "Workflow Automation", path: "/#services" },
 };
+
+export const LEAK_GAP_THRESHOLD = 15;
+
+export function hasSignificantLeakGap(scores: ModuleScores): boolean {
+  return Math.abs(scores.chatbot - scores.automation) >= LEAK_GAP_THRESHOLD;
+}
+
+export function getFindingRange(score: number): "high" | "medium" | "low" {
+  if (score <= 20) return "high";
+  if (score <= 34) return "medium";
+  return "low";
+}

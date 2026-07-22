@@ -6,7 +6,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${baseUrl}/` },
     { url: `${baseUrl}/assessment` },
-    { url: `${baseUrl}/scan` },
     { url: `${baseUrl}/contact` },
   ];
 }

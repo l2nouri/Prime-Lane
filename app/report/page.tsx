@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
@@ -8,9 +8,9 @@ import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import ScoreDisplay from "@/components/report/ScoreDisplay";
 import ModuleBreakdown from "@/components/report/ModuleBreakdown";
-import FindingCard from "@/components/report/FindingCard";
+import FindingsGate from "@/components/report/FindingsGate";
 import BookingCTA from "@/components/shared/BookingCTA";
-import { calculateResult, MODULE_NAMES, type ModuleScores } from "@/lib/assessment";
+import { calculateResult, type ModuleScores } from "@/lib/assessment";
 import { Suspense } from "react";
 
 function ReportContent() {
@@ -18,6 +18,7 @@ function ReportContent() {
   const router = useRouter();
   const plausible = usePlausible();
   const firedRef = useRef(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   const scoresParam = searchParams.get("scores");
 
@@ -63,9 +64,6 @@ function ReportContent() {
 
   const result = calculateResult(scores);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  const sortedModules = (Object.entries(scores) as [keyof ModuleScores, number][]).sort(
-    ([, a], [, b]) => a - b
-  );
 
   return (
     <>
@@ -81,51 +79,56 @@ function ReportContent() {
           </p>
         </div>
 
-        {/* Score display */}
+        {/* Score display — always visible */}
         <ScoreDisplay result={result} />
 
-        {/* Module breakdown */}
+        {/* Module breakdown — always visible */}
         <ModuleBreakdown scores={scores} />
 
-        {/* Finding cards */}
-        <div className="mt-10 flex flex-col gap-4">
-          {sortedModules.map(([key], i) => (
-            <FindingCard key={key} moduleKey={key} score={scores[key]} index={i} />
-          ))}
+        {/* Findings are never shown on-page — email gate leads to a confirmation state */}
+        <div className="mt-10">
+          {submittedEmail ? (
+            <div
+              className="rounded-[8px] px-6 py-10 text-center"
+              style={{ border: "1px solid var(--color-whisper)" }}
+            >
+              <p className="font-mono text-[11px] text-violet uppercase tracking-wider mb-3">
+                Check your inbox
+              </p>
+              <h2
+                className="font-sans font-medium text-ink mb-3"
+                style={{ fontSize: "clamp(20px, 3vw, 26px)", letterSpacing: "-0.01em" }}
+              >
+                We&apos;ve sent your full Revenue Leak Report to {submittedEmail}
+              </h2>
+              <p className="text-[14px] text-stone mb-8 max-w-[440px] mx-auto">
+                It includes what we found, what it&apos;s costing you, and the fix — for both
+                areas. Didn&apos;t get it? Check spam, or email us directly.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <BookingCTA
+                  variant="inline-button"
+                  leadContext={{ email: submittedEmail, scores, totalScore: result.totalScore }}
+                />
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center px-6 py-3 border border-whisper text-ink text-[14px] font-medium rounded-[4px] hover:border-stone transition-colors duration-150"
+                >
+                  Write to us →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <FindingsGate
+              scores={scores}
+              totalScore={result.totalScore}
+              onSubmitted={(email) => {
+                plausible("ReportGateSubmitted");
+                setSubmittedEmail(email);
+              }}
+            />
+          )}
         </div>
-
-        {/* Highlight CTA */}
-        <div
-          className="mt-10 rounded-[8px] p-7 text-center"
-          style={{ backgroundColor: "var(--color-glow)" }}
-        >
-          <p className="font-mono text-[11px] text-violet uppercase tracking-wider mb-3">
-            Your highest-impact fix
-          </p>
-          <h2
-            className="font-sans font-medium text-ink mb-3"
-            style={{ fontSize: "clamp(20px, 3vw, 28px)", letterSpacing: "-0.01em" }}
-          >
-            {MODULE_NAMES[result.highestLeak]}
-          </h2>
-          <p className="text-[15px] text-stone mb-6">
-            This is your biggest revenue leak. It&apos;s also the fastest to fix.
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
-          >
-            Let&apos;s fix this together →
-          </Link>
-          <p className="mt-3 text-[13px] text-stone">
-            Or email{" "}
-            <a href="mailto:hello@lenava.io" className="text-violet hover:underline">
-              hello@lenava.io
-            </a>
-          </p>
-        </div>
-
-        <BookingCTA variant="section" />
       </main>
       <Footer />
     </>

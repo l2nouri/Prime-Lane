@@ -1,50 +1,117 @@
 "use client";
 
 import { useReveal } from "@/lib/useReveal";
+import { useCountUp } from "@/lib/useCountUp";
 
 const problems = [
   {
     num: "01",
-    stat: "70%",
+    prefix: "",
+    target: 70,
+    suffix: "%",
     description: "of carts are abandoned — and most stores recover none of them",
+    icon: CartIcon,
   },
   {
     num: "02",
-    stat: "3+ hours",
+    prefix: "",
+    target: 3,
+    suffix: "+ hours",
     description: "average response time after business hours = lost sale",
+    icon: ClockIcon,
   },
   {
     num: "03",
-    stat: "2–3×",
+    prefix: "2–",
+    target: 3,
+    suffix: "×",
     description: "more spent by repeat customers — but most brands go silent after the order",
+    icon: TrendIcon,
   },
 ];
 
+function CartIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M3 3h2l2.4 12.2a1.5 1.5 0 0 0 1.5 1.3h8.4a1.5 1.5 0 0 0 1.5-1.2L20 8H6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="9.5" cy="20" r="1.25" fill="currentColor" />
+      <circle cx="17" cy="20" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrendIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M3.5 16.5 9 11l4 4 7.5-7.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M15.5 7h5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ProblemCard({
   num,
-  stat,
+  prefix,
+  target,
+  suffix,
   description,
+  icon: Icon,
   delay,
   borderRight,
 }: {
   num: string;
-  stat: string;
+  prefix: string;
+  target: number;
+  suffix: string;
   description: string;
+  icon: () => JSX.Element;
   delay: number;
   borderRight: boolean;
 }) {
   const ref = useReveal(delay);
+  const { ref: countRef, value } = useCountUp(target);
+  const displayValue = Number.isInteger(target) ? Math.round(value) : value.toFixed(1);
+
   return (
     <div
       ref={ref}
       className={`reveal p-8 ${borderRight ? "md:border-r border-whisper" : ""}`}
     >
-      <p className="font-mono text-[11px] text-stone uppercase tracking-wider mb-3">{num}</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-mono text-[11px] text-stone uppercase tracking-wider">{num}</p>
+        <span className="text-stone/70">
+          <Icon />
+        </span>
+      </div>
       <p
+        ref={countRef}
         className="font-mono font-medium text-violet mb-3"
         style={{ fontSize: 32, letterSpacing: "-0.01em" }}
       >
-        {stat}
+        {prefix}
+        {displayValue}
+        {suffix}
       </p>
       <p className="text-[14px] text-stone leading-relaxed">{description}</p>
     </div>
@@ -73,7 +140,12 @@ export default function Problem() {
           {problems.map((p, i) => (
             <ProblemCard
               key={p.num}
-              {...p}
+              num={p.num}
+              prefix={p.prefix}
+              target={p.target}
+              suffix={p.suffix}
+              description={p.description}
+              icon={p.icon}
               delay={i * 100}
               borderRight={i < problems.length - 1}
             />

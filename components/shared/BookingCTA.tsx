@@ -1,6 +1,52 @@
-export default function BookingCTA({ variant = "section" }: { variant?: "section" | "inline" }) {
+"use client";
+
+import { usePlausible } from "next-plausible";
+import type { ModuleScores } from "@/lib/assessment";
+
+export default function BookingCTA({
+  variant = "section",
+  leadContext,
+}: {
+  variant?: "section" | "inline" | "inline-button";
+  leadContext?: { email?: string; scores?: ModuleScores; totalScore?: number };
+}) {
   const bookingUrl = process.env.NEXT_PUBLIC_BOOKING_URL;
+  const plausible = usePlausible();
+
   if (!bookingUrl) return null;
+
+  const handleClick = () => {
+    plausible("BookingCTAClicked");
+    fetch("/api/capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "",
+        email: leadContext?.email ?? "",
+        revenue: null,
+        scores: leadContext?.scores ?? null,
+        totalScore: leadContext?.totalScore ?? null,
+        timestamp: new Date().toISOString(),
+        source: "booking-click",
+      }),
+    }).catch(() => {
+      // Don't block navigation on capture failure
+    });
+  };
+
+  if (variant === "inline-button") {
+    return (
+      <a
+        href={bookingUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleClick}
+        className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
+      >
+        Book a free 20-minute Revenue Leak Review →
+      </a>
+    );
+  }
 
   if (variant === "inline") {
     return (
@@ -16,6 +62,7 @@ export default function BookingCTA({ variant = "section" }: { variant?: "section
           href={bookingUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleClick}
           className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
         >
           Book a free 20-minute Revenue Leak Review →
@@ -42,6 +89,7 @@ export default function BookingCTA({ variant = "section" }: { variant?: "section
         href={bookingUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={handleClick}
         className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
       >
         Book your free review →

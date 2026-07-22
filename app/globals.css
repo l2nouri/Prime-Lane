@@ -42,3 +42,191 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Service card hover — stronger violet border + soft lift + subtle shadow */
+.service-card {
+  transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+.service-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-violet);
+  box-shadow: 0 10px 24px -12px rgba(124, 58, 237, 0.22);
+}
+
+/* AI Chatbot card — looping 3-dot typing indicator */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+}
+
+.typing-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--color-violet);
+  opacity: 0.25;
+  animation: typingDotPulse 1.4s ease-in-out infinite;
+}
+
+.typing-dot-1 { animation-delay: 0ms; }
+.typing-dot-2 { animation-delay: 200ms; }
+.typing-dot-3 { animation-delay: 400ms; }
+
+@keyframes typingDotPulse {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 0.9; }
+}
+
+/* Workflow Automation card — cart -> arrow -> check step sequence */
+.workflow-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+  color: var(--color-violet);
+}
+
+.workflow-step {
+  opacity: 0.2;
+  animation: workflowStepPlay 4s ease-in-out infinite;
+}
+
+.workflow-step-cart { animation-delay: 0ms; }
+.workflow-step-arrow { animation-delay: 350ms; }
+.workflow-step-check { animation-delay: 700ms; }
+
+@keyframes workflowStepPlay {
+  0% { opacity: 0.2; }
+  15% { opacity: 1; }
+  50% { opacity: 1; }
+  65%, 100% { opacity: 0.2; }
+}
+
+/* Hero entrance */
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade-up {
+  opacity: 0;
+  animation: heroFadeUp 450ms ease-out forwards;
+}
+
+.hero-fade-up-1 { animation-delay: 0ms; }
+.hero-fade-up-2 { animation-delay: 90ms; }
+.hero-fade-up-3 { animation-delay: 180ms; }
+.hero-fade-up-4 { animation-delay: 270ms; }
+.hero-fade-up-5 { animation-delay: 360ms; }
+
+.hero-headline-line-1 { animation-delay: 90ms; }
+.hero-headline-line-2 { animation-delay: 170ms; }
+
+/* Accent on "leaking revenue" — arrives after both headline lines have settled */
+.hero-headline-accent {
+  color: var(--color-violet);
+  background-image: linear-gradient(var(--color-violet), var(--color-violet));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  padding-bottom: 0;
+  animation: heroAccentIn 500ms ease-out 700ms forwards;
+}
+
+@keyframes heroAccentIn {
+  from {
+    background-size: 0% 2px;
+  }
+  to {
+    background-size: 100% 2px;
+  }
+}
+
+/* Ambient background glow behind hero headline */
+@keyframes heroGlowDrift {
+  0%, 100% {
+    opacity: 0.05;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.08;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+.hero-glow {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  max-width: 140vw;
+  max-height: 140vw;
+  background: radial-gradient(circle, var(--color-violet) 0%, transparent 70%);
+  opacity: 0.05;
+  transform: translate(-50%, -50%);
+  animation: heroGlowDrift 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Scroll cue bob */
+@keyframes scrollCueBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+.scroll-cue {
+  animation: scrollCueBob 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade-up {
+    opacity: 1;
+    animation: none;
+  }
+
+  .hero-glow {
+    animation: none;
+    opacity: 0.05;
+  }
+
+  .scroll-cue {
+    animation: none;
+  }
+
+  .hero-headline-accent {
+    animation: none;
+    background-size: 100% 2px;
+  }
+
+  .reveal {
+    transition: none;
+  }
+
+  .service-card {
+    transition: none;
+  }
+
+  .service-card:hover {
+    transform: none;
+  }
+
+  .typing-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .workflow-step {
+    animation: none;
+    opacity: 0.6;
+  }
+}

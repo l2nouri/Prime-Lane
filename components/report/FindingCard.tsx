@@ -4,14 +4,9 @@ import {
   FINDING_COPY,
   COST_COPY,
   SERVICE_FOR_MODULE,
+  getFindingRange,
   type ModuleScores,
 } from "@/lib/assessment";
-
-function getRange(score: number): "high" | "medium" | "low" {
-  if (score <= 20) return "high";
-  if (score <= 34) return "medium";
-  return "low";
-}
 
 export default function FindingCard({
   moduleKey,
@@ -22,7 +17,7 @@ export default function FindingCard({
   score: number;
   index: number;
 }) {
-  const range = getRange(score);
+  const range = getFindingRange(score);
   const finding = FINDING_COPY[moduleKey][range];
   const cost = COST_COPY[moduleKey][range];
   const service = SERVICE_FOR_MODULE[moduleKey];

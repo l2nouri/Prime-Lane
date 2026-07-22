@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const navLinks = [
-  { label: "Services", href: "#services" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "About", href: "#about" },
+  { label: "Services", href: "/#services" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "About", href: "/#about" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -21,12 +21,14 @@ export default function Nav() {
   }, []);
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("#")) {
+    if (href.startsWith("/#") && window.location.pathname === "/") {
       e.preventDefault();
-      const el = document.querySelector(href);
+      const el = document.querySelector(href.slice(1));
       if (el) el.scrollIntoView({ behavior: "smooth" });
       setMenuOpen(false);
+      return;
     }
+    setMenuOpen(false);
   };
 
   return (
@@ -120,11 +122,11 @@ export default function Nav() {
           </div>
 
           <Link
-            href="/#scan-widget"
+            href="/assessment"
             onClick={() => setMenuOpen(false)}
             className="w-full text-center py-4 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
           >
-            Scan my store →
+            Take the Free Revenue Leak Assessment →
           </Link>
         </div>
       )}

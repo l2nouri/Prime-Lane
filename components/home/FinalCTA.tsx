@@ -11,26 +11,27 @@ export default function FinalCTA() {
       <div className="max-w-[600px] mx-auto text-center">
         <div ref={ref} className="reveal">
           <p className="font-mono text-[11px] text-stone uppercase tracking-wider mb-6">
-            Ready to find your leaks?
+            Revenue Leak Assessment
           </p>
           <h2
             className="font-sans font-medium text-ink mb-5"
             style={{ fontSize: "clamp(28px, 4vw, 48px)", letterSpacing: "-0.01em", lineHeight: 1.12 }}
           >
-            Take the free assessment. Fix your biggest leak first.
+            Find out exactly where your store is losing money.
           </h2>
           <p className="text-[17px] text-stone mb-10 leading-relaxed">
-            8 minutes. A personalized score across both critical areas. A clear recommendation — no
-            fluff, no agency pitch. Just a starting point that makes sense for your store.
+            Take the 8-minute Revenue Leak Assessment. A personalized score across support and
+            revenue flow. A clear recommendation — no fluff, no agency pitch. Just a starting
+            point that makes sense for your store.
           </p>
           <Link
             href="/assessment"
             className="inline-flex items-center px-6 py-3 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
           >
-            Take the free assessment →
+            Take the Free Revenue Leak Assessment →
           </Link>
           <p className="font-mono text-[11px] text-stone mt-4">
-            Free · No credit card · Results in minutes
+            Free · 8 minutes · No credit card
           </p>
         </div>
       </div>

@@ -5,7 +5,6 @@ import Hero from "@/components/home/Hero";
 import Problem from "@/components/home/Problem";
 import Services from "@/components/home/Services";
 import HowItWorks from "@/components/home/HowItWorks";
-import AssessmentCTA from "@/components/home/AssessmentCTA";
 import About from "@/components/home/About";
 import FAQ from "@/components/home/FAQ";
 import FinalCTA from "@/components/home/FinalCTA";
@@ -19,7 +18,6 @@ export default function HomePage() {
         <Problem />
         <Services />
         <HowItWorks />
-        <AssessmentCTA />
         <About />
         <FAQ />
         <FinalCTA />
