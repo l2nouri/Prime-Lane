@@ -37,9 +37,13 @@ export default function About() {
               I&apos;m Leila Noori, founder of Lenava.
             </p>
             <p className="text-[17px] text-graphite mb-8" style={{ lineHeight: 1.7 }}>
-              I come from a background in business and operations, which means I don&apos;t just build
-              AI systems — I build them with a real understanding of how businesses actually work.
-              Based in Milan, working with e-commerce brands across Europe.
+              My background spans enterprise integration
+              architecture, market intelligence, and business strategy — I&apos;ve spent years building
+              systems that connect data across complex operations, and doing the analysis to know what
+              that data actually means for growth. I bring that same thinking to ecommerce brands: AI
+              systems built with the precision of someone who has spent years making complex business
+              systems talk to each other. Not plugins. Not templates. Systems that work the way your
+              business actually does. Based in Milan, working across Europe.
             </p>
             <div className="flex flex-col gap-1">
               <p className="text-[15px] font-medium text-ink">Leila Noori</p>

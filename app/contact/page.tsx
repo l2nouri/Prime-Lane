@@ -99,7 +99,7 @@ export default function ContactPage() {
                 </p>
                 <p className="text-[17px] text-ink mb-2">Thank you.</p>
                 <p className="text-[15px] text-stone">
-                  I&apos;ll reply within 24 hours.
+                  We&apos;ll reply within 24 hours.
                 </p>
               </div>
             ) : (
@@ -149,7 +149,7 @@ export default function ContactPage() {
                 </select>
                 <textarea
                   name="message"
-                  placeholder="Tell me about your store and what you're looking to improve..."
+                  placeholder="Tell us about your store and what you're looking to improve..."
                   value={form.message}
                   onChange={handleChange}
                   rows={5}

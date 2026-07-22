@@ -58,7 +58,7 @@ export default function ChatPage() {
     const opening =
       language === 'it'
         ? '👋 Benvenuto su LENAVA AI! Aiuto le attività e-commerce a risparmiare tempo, ridurre i costi e aumentare le vendite. Cosa vorresti migliorare oggi?'
-        : '👋 Welcome to LENAVA AI! I help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?';
+        : '👋 Welcome to LENAVA AI! We help e-commerce businesses save time, reduce costs, and increase sales. What would you like to improve today?';
 
     setMessages([
       {

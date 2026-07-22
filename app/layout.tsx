@@ -7,7 +7,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Lenava — AI Agents for Ecommerce Brands",
   description:
-    "AI agents and automation systems for independent ecommerce brands growing internationally. Built to be found.",
+    "AI agents and automation systems for independent ecommerce brands growing internationally.",
   openGraph: {
     title: "Lenava — AI Agents for Ecommerce Brands",
     description:
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Lenava — AI Agents for Ecommerce Brands",
     description:
-      "AI agents and automation systems for independent ecommerce brands. Built to be found.",
+      "AI agents and automation systems for independent ecommerce brands.",
   },
 };
 

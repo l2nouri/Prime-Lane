@@ -6,7 +6,7 @@ import { useReveal } from "@/lib/useReveal";
 const faqs = [
   {
     q: "Do I need to be technical to work with you?",
-    a: "No. I handle everything technical. You provide context about your brand, products, and customers — I build the systems.",
+    a: "No. We handle everything technical. You provide context about your brand, products, and customers — we build the systems.",
   },
   {
     q: "How long does it take to build?",
@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     q: "What platforms do you work with?",
-    a: "Shopify, WooCommerce, and most major ecommerce platforms. I also integrate with Gmail, WhatsApp, Notion, Airtable, and others.",
+    a: "Shopify, WooCommerce, and most major ecommerce platforms. We also integrate with Gmail, WhatsApp, Notion, Airtable, and others.",
   },
   {
     q: "Do I need to commit to a monthly retainer?",

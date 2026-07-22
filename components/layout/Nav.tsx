@@ -44,14 +44,9 @@ export default function Nav() {
         <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
-<div className="flex flex-col items-start leading-none gap-[8px]">
-              <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
-                Lenava
-              </span>
-              <span className="font-sans text-[9px] text-stone tracking-[0.14em]">
-                Built to be found.
-              </span>
-            </div>
+            <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
+              Lenava
+            </span>
           </Link>
 
           {/* Desktop links */}
@@ -98,14 +93,9 @@ export default function Nav() {
                 <line x1="4" y1="8" x2="18" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <line x1="7" y1="3" x2="23" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <div className="flex flex-col items-start leading-none gap-[8px]">
-                <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
-                  Lenava
-                </span>
-                <span className="font-sans text-[9px] text-stone tracking-[0.14em] uppercase">
-                  Built to be found.
-                </span>
-              </div>
+              <span className="font-sans font-medium text-ink tracking-widest uppercase text-[14px]">
+                Lenava
+              </span>
             </Link>
             <button
               onClick={() => setMenuOpen(false)}
@@ -130,11 +120,11 @@ export default function Nav() {
           </div>
 
           <Link
-            href="/assessment"
+            href="/#scan-widget"
             onClick={() => setMenuOpen(false)}
             className="w-full text-center py-4 bg-violet text-white text-[14px] font-medium rounded-[4px] hover:opacity-[0.88] transition-opacity duration-150"
           >
-            Take the assessment →
+            Scan my store →
           </Link>
         </div>
       )}
