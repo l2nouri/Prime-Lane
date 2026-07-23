@@ -28,6 +28,13 @@ create table documents (
 );
 create index on documents(client_id);
 
+-- Admin-configurable settings (key/value)
+create table settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz default now()
+);
+
 -- Thumbs up/down feedback on individual assistant messages
 create table message_feedback (
   id uuid primary key default gen_random_uuid(),
@@ -80,21 +87,24 @@ type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type AnthropicTool = { name: string; description: string; input_schema: object };
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
 async function callAnthropic(
+  model: string,
   system: string,
   messages: ChatMessage[],
   tools: AnthropicTool[],
   stream: false
 ): Promise<{ content: Array<{ type: string; text?: string; name?: string; input?: unknown }> }>;
 async function callAnthropic(
+  model: string,
   system: string,
   messages: ChatMessage[],
   tools: AnthropicTool[],
   stream: true
 ): Promise<Response>;
 async function callAnthropic(
+  model: string,
   system: string,
   messages: ChatMessage[],
   tools: AnthropicTool[],
@@ -108,7 +118,7 @@ async function callAnthropic(
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
+      model,
       max_tokens: 1024,
       stream,
       system,
@@ -450,6 +460,20 @@ async function getEmbedding(text: string): Promise<number[]> {
   return data.data[0]?.embedding ?? [];
 }
 
+async function getActiveModel(supabase: ReturnType<typeof getSupabaseClient>): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'active_model')
+      .single();
+    if (error || !data?.value) return DEFAULT_MODEL;
+    return (data as { value: string }).value;
+  } catch {
+    return DEFAULT_MODEL;
+  }
+}
+
 async function retrieveRAGContext(message: string, supabase: ReturnType<typeof getSupabaseClient>): Promise<string> {
   try {
     const embedding = await getEmbedding(message);
@@ -481,15 +505,17 @@ async function getConversationHistory(
       .from('messages')
       .select('role, content')
       .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .limit(10);
+      .order('created_at', { ascending: false })
+      .limit(30);
 
     if (error || !data) return [];
 
-    return (data as Array<{ role: string; content: string }>).map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }));
+    return (data as Array<{ role: string; content: string }>)
+      .reverse()
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
   } catch {
     return [];
   }
@@ -568,9 +594,10 @@ export async function POST(req: Request): Promise<Response> {
 
   const supabase = getSupabaseClient();
 
-  const [history, ragContext] = await Promise.all([
+  const [history, ragContext, model] = await Promise.all([
     getConversationHistory(sessionId, supabase),
     retrieveRAGContext(message, supabase),
+    getActiveModel(supabase),
   ]);
 
   const systemPrompt = SYSTEM_PROMPT.replace(
@@ -598,7 +625,7 @@ export async function POST(req: Request): Promise<Response> {
   // Telegram: collect full response, return JSON
   if (source === 'telegram') {
     try {
-      const res = await callAnthropic(systemPrompt, messages, [CAPTURE_LEAD_TOOL], false) as unknown as Response;
+      const res = await callAnthropic(model, systemPrompt, messages, [CAPTURE_LEAD_TOOL], false) as unknown as Response;
       const response = await res.json() as {
         content: Array<{ type: string; text?: string; name?: string; input?: unknown }>;
       };
@@ -617,7 +644,9 @@ export async function POST(req: Request): Promise<Response> {
         reply = "Perfect. We'll be in touch within 24 hours.";
       }
 
-      await saveMessage(sessionId, 'assistant', reply, source, supabase);
+      if (reply.trim()) {
+        await saveMessage(sessionId, 'assistant', reply, source, supabase);
+      }
       return new Response(JSON.stringify({ reply }), {
         headers: { 'Content-Type': 'application/json' },
       });
@@ -633,7 +662,7 @@ export async function POST(req: Request): Promise<Response> {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const anthropicRes = await callAnthropic(systemPrompt, messages, [CAPTURE_LEAD_TOOL], true) as Response;
+        const anthropicRes = await callAnthropic(model, systemPrompt, messages, [CAPTURE_LEAD_TOOL], true) as Response;
         if (!anthropicRes.ok || !anthropicRes.body) throw new Error('Anthropic stream failed');
 
         let fullAssistantText = '';
@@ -676,7 +705,9 @@ export async function POST(req: Request): Promise<Response> {
           }
         }
 
-        const messageId = await saveMessage(sessionId, 'assistant', fullAssistantText, source, supabase);
+        const messageId = fullAssistantText.trim()
+          ? await saveMessage(sessionId, 'assistant', fullAssistantText, source, supabase)
+          : null;
         controller.enqueue(encodeSSE({ type: 'done', messageId }));
       } catch {
         controller.enqueue(
