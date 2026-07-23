@@ -672,6 +672,7 @@ export async function POST(req: Request): Promise<Response> {
         let currentToolName = '';
         let currentToolInput = '';
         let inToolUse = false;
+        let capturedLead = false;
 
         for await (const event of parseSSE(anthropicRes.body)) {
           if (event.type === 'content_block_start') {
@@ -693,6 +694,7 @@ export async function POST(req: Request): Promise<Response> {
               try {
                 const toolInput = JSON.parse(currentToolInput) as Record<string, unknown>;
                 await saveLead(toolInput, sessionId, source, supabase);
+                capturedLead = true;
                 controller.enqueue(
                   encodeSSE({ type: 'tool_call', tool: 'capture_lead', status: 'success' })
                 );
@@ -706,6 +708,12 @@ export async function POST(req: Request): Promise<Response> {
               currentToolInput = '';
             }
           }
+        }
+
+        // Fallback: if the model only called the tool with no text block, generate a confirmation
+        if (!fullAssistantText.trim() && capturedLead) {
+          fullAssistantText = "Perfect. We'll be in touch within 24 hours.";
+          controller.enqueue(encodeSSE({ type: 'token', content: fullAssistantText }));
         }
 
         const messageId = fullAssistantText.trim()
