@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1. Notify Leila
-    await resend.emails.send({
+    const notifyResult = await resend.emails.send({
       from: "Lenava <noreply@lenava.io>",
       to: "hello@lenava.io",
       subject: isBookingClick
@@ -143,26 +143,41 @@ export async function POST(req: NextRequest) {
         ? `Name: ${name}\nEmail: ${email}\nRevenue: ${revenue}\nScore: ${totalScore}/100\n\nScores:\nAI Chatbot: ${scores?.chatbot}/50\nWorkflow Automation: ${scores?.automation}/50\n\nTimestamp: ${timestamp}`
         : `Name: ${name}\nEmail: ${email}\nRevenue: ${revenue}\n\nMessage:\n${message}\n\nTimestamp: ${timestamp}`,
     });
+    if (notifyResult.error) {
+      console.error("[capture] Resend error (notify Leila):", JSON.stringify(notifyResult.error));
+    } else {
+      console.log("[capture] Resend OK (notify Leila), id:", notifyResult.data?.id);
+    }
 
     // 2. Confirmation to lead (skipped for booking-click pings — the booking page itself confirms)
     if (isAssessment && hasEmail && scores) {
-      await resend.emails.send({
+      const reportResult = await resend.emails.send({
         from: "Lenava <noreply@lenava.io>",
         to: email,
         subject: "Your full Revenue Leak Report — Lenava",
         html: buildReportEmailHtml(scores as ModuleScores, totalScore),
       });
+      if (reportResult.error) {
+        console.error("[capture] Resend error (report email to lead):", JSON.stringify(reportResult.error));
+      } else {
+        console.log("[capture] Resend OK (report email to lead), id:", reportResult.data?.id);
+      }
     } else if (!isAssessment && !isBookingClick && hasEmail) {
-      await resend.emails.send({
+      const contactResult = await resend.emails.send({
         from: "Lenava <noreply@lenava.io>",
         to: email,
         subject: "Thanks for reaching out — Lenava",
         text: `Hi ${name},\n\nThanks for getting in touch. I'll reply within 24 hours.\n\n— Leila\nLenava\nhello@lenava.io`,
       });
+      if (contactResult.error) {
+        console.error("[capture] Resend error (contact confirmation):", JSON.stringify(contactResult.error));
+      } else {
+        console.log("[capture] Resend OK (contact confirmation), id:", contactResult.data?.id);
+      }
     }
   } catch (err) {
-    // Log error but don't fail the request — user experience takes priority
-    console.error("[capture] Resend error:", err);
+    // Genuine network/runtime failure (not a Resend API-level error, which resolves rather than throws)
+    console.error("[capture] Unexpected error during email send:", err);
   }
 
   return NextResponse.json({ success: true });

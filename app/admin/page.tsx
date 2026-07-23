@@ -963,6 +963,126 @@ function FeedbackTab() {
   );
 }
 
+type ModelOption = { id: string; label: string };
+
+function ModelsTab() {
+  const [activeModel, setActiveModel] = useState<string | null>(null);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+  const [selected, setSelected] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed');
+        return res.json();
+      })
+      .then((data) => {
+        setActiveModel(data.activeModel);
+        setSelected(data.activeModel);
+        setAvailableModels(data.availableModels ?? []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, []);
+
+  async function handleSave() {
+    if (!selected || selected === activeModel) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: selected }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setActiveModel(selected);
+      setSaved(true);
+    } catch {
+      setError(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error && !activeModel) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#8A8078]">Failed to load model settings.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <p className="text-[14px] text-[#8A8078] mb-6">
+        Choose which Claude model powers the chatbot. Changes apply to new conversations immediately.
+      </p>
+
+      <div className="bg-white rounded-2xl border border-[#E8E0D8] p-6 max-w-lg">
+        <h3 className="text-[15px] font-medium text-[#1A1A1A] mb-4">Active Model</h3>
+        <div className="flex flex-col gap-2">
+          {availableModels.map((m) => (
+            <label
+              key={m.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                selected === m.id
+                  ? 'border-[#7C3AED] bg-[#7C3AED]/5'
+                  : 'border-[#E8E0D8] hover:bg-[#FAFAF8]'
+              }`}
+            >
+              <input
+                type="radio"
+                name="model"
+                value={m.id}
+                checked={selected === m.id}
+                onChange={() => {
+                  setSelected(m.id);
+                  setSaved(false);
+                }}
+                className="accent-[#7C3AED]"
+              />
+              <div className="flex flex-col">
+                <span className="text-[14px] text-[#1A1A1A] font-medium">{m.label}</span>
+                <span className="text-[11px] text-[#A8A098] font-mono">{m.id}</span>
+              </div>
+              {activeModel === m.id && (
+                <span className="ml-auto text-[11px] font-medium text-[#7C3AED]">Active</span>
+              )}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 mt-5">
+          <button
+            onClick={handleSave}
+            disabled={saving || !selected || selected === activeModel}
+            className="px-4 py-2 rounded-lg text-[13px] font-medium bg-[#7C3AED] text-white hover:bg-[#6D2FD1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          {saved && <span className="text-[12px] text-green-700">Saved.</span>}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ComingSoonTab({ name }: { name: string }) {
   return (
     <div className="bg-white rounded-2xl border border-[#E8E0D8] p-12 text-center">
@@ -1130,8 +1250,11 @@ export default function AdminDashboard() {
             {/* Feedback Tab */}
             {activeTab === 'Feedback' && <FeedbackTab />}
 
+            {/* Models Tab */}
+            {activeTab === 'Models' && <ModelsTab />}
+
             {/* Coming Soon Tabs */}
-            {!['Dashboard', 'Leads', 'Conversations', 'Knowledge Base', 'Feedback'].includes(activeTab) && (
+            {!['Dashboard', 'Leads', 'Conversations', 'Knowledge Base', 'Feedback', 'Models'].includes(activeTab) && (
               <ComingSoonTab name={activeTab} />
             )}
           </>
