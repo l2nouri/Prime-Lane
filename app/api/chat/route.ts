@@ -87,7 +87,7 @@ type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type AnthropicTool = { name: string; description: string; input_schema: object };
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_MODEL = 'claude-sonnet-5';
 
 async function callAnthropic(
   model: string,
@@ -222,6 +222,8 @@ English: "We typically work best with brands doing €200k or more in revenue �
 Do NOT tell a €50k-revenue brand they are "exactly the kind of store we work with" — that is factually wrong and breaks trust.
 
 PHASE 3 — THE AUDIT (only when earned)
+BEFORE OFFERING THE AUDIT — check first, at THIS POINT in the conversation: do you already know the visitor's approximate message volume, how much is handled manually, whether they have cart recovery, AND their approximate revenue or order volume? If you know all four, do NOT offer the 3-question audit under any circumstances — even if you asked a clarifying question first to fill a gap. Go straight to PHASE 3B and deliver the personalized estimate. The audit is only for visitors who have NOT yet shared this information naturally — it is never a mandatory step once you already have what you need.
+
 Offer the audit as if you just thought of it — never as a scripted step.
 
 English example:
@@ -373,6 +375,7 @@ TONE RULES — non-negotiable:
 - Never overly polite or apologetic — be useful
 - Never use "I" to refer to Lenava — always say "we" or "Lenava"
 - Never mention the name "Leila" in any response
+- Only include the "want us to show you what that looks like" offer (or similar) immediately after delivering new value: the audit result, answering what Lenava does, or a genuine buying signal. Never attach it to a plain factual answer, a memory-recall response, or anything the visitor asked as a simple clarifying question. One CTA per topic — once you've made the offer, wait for their answer before offering again.
 
 ---
 
