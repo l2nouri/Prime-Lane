@@ -149,6 +149,11 @@ function formatDate(iso: string) {
   });
 }
 
+function truncate(text: string | null | undefined, max: number) {
+  if (!text) return '—';
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
 function LeadsTab({ stats }: { stats: Stats }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'chatbot' | 'assessment' | 'contact'>('all');
@@ -272,6 +277,9 @@ function LeadsTab({ stats }: { stats: Stats }) {
                     <th className="text-left pb-3 font-medium">Contact</th>
                     <th className="text-left pb-3 font-medium">Type</th>
                     <th className="text-left pb-3 font-medium">Channel</th>
+                    <th className="text-left pb-3 font-medium">Business Type</th>
+                    <th className="text-left pb-3 font-medium">Problem</th>
+                    <th className="text-left pb-3 font-medium">Est. Hours/Revenue</th>
                     <th className="text-left pb-3 font-medium">Date</th>
                   </tr>
                 </thead>
@@ -299,6 +307,17 @@ function LeadsTab({ stats }: { stats: Stats }) {
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F0EBE5] text-[#6B6560]">
                           {lead.channel}
                         </span>
+                      </td>
+                      <td className="py-3 text-[#6B6560]">
+                        {lead.business_type || '—'}
+                      </td>
+                      <td className="py-3 text-[#6B6560]" title={lead.problem || undefined}>
+                        {truncate(lead.problem, 60)}
+                      </td>
+                      <td className="py-3 text-[#6B6560]">
+                        {lead.estimated_hours_saved || lead.estimated_revenue_recovered
+                          ? `${lead.estimated_hours_saved || '—'}, ${lead.estimated_revenue_recovered || '—'}`
+                          : '—'}
                       </td>
                       <td className="py-3 text-[#A8A098] font-mono text-[12px]">
                         {formatDate(lead.date)}
