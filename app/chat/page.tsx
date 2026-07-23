@@ -69,11 +69,11 @@ export default function ChatPage() {
       },
     ]);
 
-    inputRef.current?.focus();
+    inputRef.current?.focus({ preventScroll: true });
   }, [language]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   async function sendMessage(text: string) {
@@ -201,7 +201,7 @@ export default function ChatPage() {
     } finally {
       setIsWaiting(false);
       setIsStreaming(false);
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
     }
   }
 
