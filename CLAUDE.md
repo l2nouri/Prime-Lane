@@ -1,7 +1,5 @@
 # Lenava
 
-**Tagline:** Built to be found
-
 AI-powered email automation services for e-commerce and DTC brands.
 
 ## Tech Stack

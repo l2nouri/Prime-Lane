@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lenava.io"),
   title: "Lenava — AI Agents for Ecommerce Brands",
   description:
     "AI agents and automation systems for independent ecommerce brands growing internationally.",
