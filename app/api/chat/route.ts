@@ -544,14 +544,33 @@ async function saveMessage(
   }
 }
 
+// Structured, greppable log line for tracing capture_lead outcomes by session.
+function logCaptureLead(
+  event: 'invoked' | 'skipped' | 'saved' | 'save_failed',
+  sessionId: string,
+  source: string,
+  detail?: Record<string, unknown>
+): void {
+  console.log(
+    JSON.stringify({
+      tag: 'capture_lead',
+      event,
+      sessionId,
+      source,
+      ts: new Date().toISOString(),
+      ...detail,
+    })
+  );
+}
+
 async function saveLead(
   input: Record<string, unknown>,
   sessionId: string,
   source: string,
   supabase: ReturnType<typeof getSupabaseClient>
-): Promise<void> {
+): Promise<boolean> {
   try {
-    await supabase.from('chat_leads').insert({
+    const { error } = await supabase.from('chat_leads').insert({
       session_id: sessionId,
       name: input.name,
       email: input.email ?? null,
@@ -565,13 +584,49 @@ async function saveLead(
       language: input.language,
       source,
     });
-  } catch {
-    // fire and forget
+    if (error) {
+      logCaptureLead('save_failed', sessionId, source, { reason: error.message });
+      return false;
+    }
+    logCaptureLead('saved', sessionId, source, {
+      preferred_contact: input.preferred_contact,
+      hasEmail: Boolean(input.email),
+      hasWhatsapp: Boolean(input.whatsapp),
+    });
+    return true;
+  } catch (err) {
+    logCaptureLead('save_failed', sessionId, source, {
+      reason: err instanceof Error ? err.message : String(err),
+    });
+    return false;
   }
 }
 
 function encodeSSE(data: Record<string, unknown>): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+// Heuristic only — used to flag likely-missed captures for tracing, not to gate behavior.
+const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+const PHONE_PATTERN = /(\+?\d[\d\s().-]{6,}\d)/;
+
+function looksLikeContactInfo(text: string): boolean {
+  return EMAIL_PATTERN.test(text) || PHONE_PATTERN.test(text);
+}
+
+// Explicit, channel-specific fallback confirmation — used only when the model's own
+// reply didn't already confirm the capture in text.
+function buildConfirmationMessage(input: Record<string, unknown>, language: 'en' | 'it'): string {
+  const name = typeof input.name === 'string' && input.name.trim() ? input.name.trim() : '';
+  const channel = input.preferred_contact === 'email' ? 'email' : 'WhatsApp';
+
+  if (language === 'it') {
+    const greet = name ? `Perfetto, ${name}` : 'Perfetto';
+    return `${greet} — ti contatteremo su ${channel === 'email' ? 'email' : 'WhatsApp'} entro 24 ore.`;
+  }
+
+  const greet = name ? `Got it, ${name}` : 'Got it';
+  return `${greet} — someone will reach out on ${channel} within 24 hours.`;
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -634,17 +689,31 @@ export async function POST(req: Request): Promise<Response> {
       };
 
       let reply = '';
+      let leadSaved = false;
+      let leadInput: Record<string, unknown> | null = null;
       for (const block of response.content) {
         if (block.type === 'text') {
           reply += block.text ?? '';
         } else if (block.type === 'tool_use' && block.name === 'capture_lead') {
-          await saveLead(block.input as Record<string, unknown>, sessionId, source, supabase);
+          leadInput = block.input as Record<string, unknown>;
+          logCaptureLead('invoked', sessionId, source, {
+            preferred_contact: leadInput.preferred_contact,
+          });
+          leadSaved = await saveLead(leadInput, sessionId, source, supabase);
         }
       }
 
-      // Fallback: if the model only called the tool with no text block, generate a confirmation
-      if (!reply && response.content.some((b) => b.type === 'tool_use' && b.name === 'capture_lead')) {
-        reply = "Perfect. We'll be in touch within 24 hours.";
+      if (!leadInput && looksLikeContactInfo(message)) {
+        logCaptureLead('skipped', sessionId, source, {
+          reason: 'message looked like contact info but capture_lead was not invoked',
+        });
+      }
+
+      // Fallback: build an explicit confirmation if the model didn't give one, or gave a
+      // save without ever confirming — but only when the lead actually saved. A failed
+      // save should not tell the visitor we've got their info.
+      if (leadSaved && leadInput && !reply.trim()) {
+        reply = buildConfirmationMessage(leadInput, language);
       }
 
       if (reply.trim()) {
@@ -672,7 +741,8 @@ export async function POST(req: Request): Promise<Response> {
         let currentToolName = '';
         let currentToolInput = '';
         let inToolUse = false;
-        let capturedLead = false;
+        let leadSaved = false;
+        let leadInput: Record<string, unknown> | null = null;
 
         for await (const event of parseSSE(anthropicRes.body)) {
           if (event.type === 'content_block_start') {
@@ -693,12 +763,23 @@ export async function POST(req: Request): Promise<Response> {
             if (inToolUse && currentToolName === 'capture_lead') {
               try {
                 const toolInput = JSON.parse(currentToolInput) as Record<string, unknown>;
-                await saveLead(toolInput, sessionId, source, supabase);
-                capturedLead = true;
+                leadInput = toolInput;
+                logCaptureLead('invoked', sessionId, source, {
+                  preferred_contact: toolInput.preferred_contact,
+                });
+                leadSaved = await saveLead(toolInput, sessionId, source, supabase);
                 controller.enqueue(
-                  encodeSSE({ type: 'tool_call', tool: 'capture_lead', status: 'success' })
+                  encodeSSE({
+                    type: 'tool_call',
+                    tool: 'capture_lead',
+                    status: leadSaved ? 'success' : 'error',
+                  })
                 );
-              } catch {
+              } catch (err) {
+                logCaptureLead('save_failed', sessionId, source, {
+                  reason: err instanceof Error ? err.message : String(err),
+                  stage: 'parse_tool_input',
+                });
                 controller.enqueue(
                   encodeSSE({ type: 'tool_call', tool: 'capture_lead', status: 'error' })
                 );
@@ -710,9 +791,17 @@ export async function POST(req: Request): Promise<Response> {
           }
         }
 
-        // Fallback: if the model only called the tool with no text block, generate a confirmation
-        if (!fullAssistantText.trim() && capturedLead) {
-          fullAssistantText = "Perfect. We'll be in touch within 24 hours.";
+        if (!leadInput && looksLikeContactInfo(message)) {
+          logCaptureLead('skipped', sessionId, source, {
+            reason: 'message looked like contact info but capture_lead was not invoked',
+          });
+        }
+
+        // Fallback: build an explicit confirmation if the model didn't give one — but only
+        // when the lead actually saved. A failed save should not tell the visitor we've got
+        // their info; a silent success looks identical to a failure otherwise.
+        if (leadSaved && leadInput && !fullAssistantText.trim()) {
+          fullAssistantText = buildConfirmationMessage(leadInput, language);
           controller.enqueue(encodeSSE({ type: 'token', content: fullAssistantText }));
         }
 

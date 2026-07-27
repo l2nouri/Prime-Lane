@@ -112,13 +112,31 @@ async function saveMsg(
   } catch { /* fire and forget */ }
 }
 
+// Structured, greppable log line for tracing capture_lead outcomes by session.
+function logCaptureLead(
+  event: 'invoked' | 'skipped' | 'saved' | 'save_failed',
+  sessionId: string,
+  detail?: Record<string, unknown>
+): void {
+  console.log(
+    JSON.stringify({
+      tag: 'capture_lead',
+      event,
+      sessionId,
+      source: 'telegram',
+      ts: new Date().toISOString(),
+      ...detail,
+    })
+  );
+}
+
 async function saveLead(
   input: Record<string, unknown>,
   sessionId: string,
   supabase: ReturnType<typeof getSupabase>
-) {
+): Promise<boolean> {
   try {
-    await supabase.from('chat_leads').insert({
+    const { error } = await supabase.from('chat_leads').insert({
       session_id: sessionId,
       name: input.name,
       email: input.email ?? null,
@@ -132,7 +150,45 @@ async function saveLead(
       language: input.language,
       source: 'telegram',
     });
-  } catch { /* fire and forget */ }
+    if (error) {
+      logCaptureLead('save_failed', sessionId, { reason: error.message });
+      return false;
+    }
+    logCaptureLead('saved', sessionId, {
+      preferred_contact: input.preferred_contact,
+      hasEmail: Boolean(input.email),
+      hasWhatsapp: Boolean(input.whatsapp),
+    });
+    return true;
+  } catch (err) {
+    logCaptureLead('save_failed', sessionId, {
+      reason: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
+// Heuristic only — used to flag likely-missed captures for tracing, not to gate behavior.
+const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+const PHONE_PATTERN = /(\+?\d[\d\s().-]{6,}\d)/;
+
+function looksLikeContactInfo(text: string): boolean {
+  return EMAIL_PATTERN.test(text) || PHONE_PATTERN.test(text);
+}
+
+// Explicit, channel-specific fallback confirmation — used only when the model's own
+// reply didn't already confirm the capture in text.
+function buildConfirmationMessage(input: Record<string, unknown>, language: 'en' | 'it'): string {
+  const name = typeof input.name === 'string' && input.name.trim() ? input.name.trim() : '';
+  const channel = input.preferred_contact === 'email' ? 'email' : 'WhatsApp';
+
+  if (language === 'it') {
+    const greet = name ? `Perfetto, ${name}` : 'Perfetto';
+    return `${greet} — ti contatteremo su ${channel === 'email' ? 'email' : 'WhatsApp'} entro 24 ore.`;
+  }
+
+  const greet = name ? `Got it, ${name}` : 'Got it';
+  return `${greet} — someone will reach out on ${channel} within 24 hours.`;
 }
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
@@ -215,12 +271,28 @@ export async function POST(req: Request): Promise<Response> {
     });
 
     let reply = '';
+    let leadSaved = false;
+    let leadInput: Record<string, unknown> | null = null;
     for (const block of response.content) {
       if (block.type === 'text') {
         reply += block.text;
       } else if (block.type === 'tool_use' && block.name === 'capture_lead') {
-        await saveLead(block.input as Record<string, unknown>, sessionId, supabase);
+        leadInput = block.input as Record<string, unknown>;
+        logCaptureLead('invoked', sessionId, { preferred_contact: leadInput.preferred_contact });
+        leadSaved = await saveLead(leadInput, sessionId, supabase);
       }
+    }
+
+    if (!leadInput && looksLikeContactInfo(text)) {
+      logCaptureLead('skipped', sessionId, {
+        reason: 'message looked like contact info but capture_lead was not invoked',
+      });
+    }
+
+    // Fallback: build an explicit confirmation if the model didn't give one — but only
+    // when the lead actually saved, so a failed save never claims success to the visitor.
+    if (leadSaved && leadInput && !reply.trim()) {
+      reply = buildConfirmationMessage(leadInput, language);
     }
 
     if (reply) {
