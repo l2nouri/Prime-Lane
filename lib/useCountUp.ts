@@ -8,7 +8,10 @@ function easeOutQuad(t: number) {
 
 export function useCountUp(target: number, duration = 1200) {
   const ref = useRef<HTMLDivElement>(null);
-  const [value, setValue] = useState(0);
+  // Default to the final value so SSR/no-JS output and the pre-animation
+  // paint always show the real number, never a 0 placeholder. The count-up
+  // below is a progressive-enhancement replay from 0, layered on top.
+  const [value, setValue] = useState(target);
 
   useEffect(() => {
     const el = ref.current;
@@ -20,12 +23,16 @@ export function useCountUp(target: number, duration = 1200) {
       return;
     }
 
+    let cancelled = false;
+    setValue(0);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           const start = performance.now();
 
           const tick = (now: number) => {
+            if (cancelled) return;
             const elapsed = now - start;
             const progress = Math.min(elapsed / duration, 1);
             setValue(target * easeOutQuad(progress));
@@ -44,7 +51,10 @@ export function useCountUp(target: number, duration = 1200) {
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
   }, [target, duration]);
 
   return { ref, value };
